@@ -30,6 +30,7 @@ services:
       APP_USER: ${APP_USER}
       APP_PASSWORD: ${APP_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      QUOTE_START: ${QUOTE_START:-0}
     depends_on:
       db:
         condition: service_healthy

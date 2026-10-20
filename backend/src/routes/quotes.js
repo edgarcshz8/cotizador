@@ -6,11 +6,14 @@ const router = Router();
 
 async function nextQuoteNumber() {
   const year = new Date().getFullYear();
+  const start = parseInt(process.env.QUOTE_START || '0');
   const { rows } = await pool.query(
-    "SELECT COUNT(*) FROM quotes WHERE quote_number LIKE $1",
+    `SELECT MAX(CAST(SPLIT_PART(quote_number, '-', 3) AS INTEGER)) AS max_seq
+     FROM quotes WHERE quote_number LIKE $1`,
     [`COT-${year}-%`]
   );
-  const seq = parseInt(rows[0].count) + 1;
+  const maxSeq = rows[0].max_seq ?? 0;
+  const seq = Math.max(maxSeq, start) + 1;
   return `COT-${year}-${String(seq).padStart(4, '0')}`;
 }
 
