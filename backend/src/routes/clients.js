@@ -12,6 +12,22 @@ router.get('/', async (_req, res) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  const q = (req.query.q || '').trim();
+  if (!q) return res.json([]);
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM clients
+       WHERE rut ILIKE $1 OR name ILIKE $1 OR company ILIKE $1
+       ORDER BY name ASC LIMIT 8`,
+      [`%${q}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/rut/:rut', async (req, res) => {
   try {
     const { rows } = await pool.query(
