@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cotizador
+      POSTGRES_USER: cotizador
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cotizador"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: cotizador
+      DB_USER: cotizador
+      DB_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
+      PORT: 3001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-80}:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

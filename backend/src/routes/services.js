@@ -1,0 +1,65 @@
+import { Router } from 'express';
+import { pool } from '../db/index.js';
+
+const router = Router();
+
+router.get('/', async (_req, res) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM services WHERE active = true ORDER BY category, name'
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/all', async (_req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM services ORDER BY category, name');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/', async (req, res) => {
+  const { name, description, unit_price, unit_label, category } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO services (name, description, unit_price, unit_label, category)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [name, description, unit_price, unit_label || 'unidad', category || 'Otro']
+    );
+    res.status(201).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description, unit_price, unit_label, category, active } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE services
+       SET name=$1, description=$2, unit_price=$3, unit_label=$4, category=$5, active=$6
+       WHERE id=$7 RETURNING *`,
+      [name, description, unit_price, unit_label, category, active, id]
+    );
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.delete('/:id', async (req, res) => {
+  try {
+    await pool.query('UPDATE services SET active = false WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+export default router;
