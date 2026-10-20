@@ -32,7 +32,12 @@ export default function QuoteHistory() {
     if (detail?.id === id) setDetail(p => ({ ...p, status }));
   };
 
-  const downloadPDF = (id) => window.open(`/api/quotes/${id}/pdf`, '_blank');
+  const downloadPDF = async (id) => {
+    const { data } = await axios.get(`/api/quotes/${id}/pdf`, { responseType: 'blob' });
+    const url = URL.createObjectURL(data);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  };
 
   const fmt = (n, cur = 'CLP') =>
     `${cur} ${new Intl.NumberFormat('es-CL').format(Math.round(parseFloat(n) || 0))}`;

@@ -103,7 +103,10 @@ export default function QuoteBuilder() {
         valid_days: validDays,
       });
       setSuccess(data);
-      window.open(`/api/quotes/${data.id}/pdf`, '_blank');
+      const pdf = await axios.get(`/api/quotes/${data.id}/pdf`, { responseType: 'blob' });
+      const url = URL.createObjectURL(pdf.data);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
       setCart([]);
       setClient({ name: '', email: '', company: '', phone: '' });
       setNotes('');
