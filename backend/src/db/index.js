@@ -9,8 +9,6 @@ dotenv.config();
 const { Pool } = pg;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const r = await pool.query('SELECT current_database(), inet_server_addr(), inet_server_port()');
-console.log('Conectado a:', r.rows[0], process.env.DB_HOST);
 
 export const pool = new Pool({
   host: process.env.DB_HOST || 'localhost',
