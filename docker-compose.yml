@@ -31,11 +31,11 @@ services:
       db:
         condition: service_healthy
 
-  frontend:
+    frontend:
     build: ./frontend
     restart: unless-stopped
-    ports:
-      - "${PORT}:80"
+    expose:
+      - "80"
     depends_on:
       - backend
 
