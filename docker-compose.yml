@@ -5,8 +5,8 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: cotizador
-      POSTGRES_USER: cotizador
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -21,9 +21,9 @@ services:
     restart: unless-stopped
     environment:
       DB_HOST: db
-      DB_PORT: 5432
-      DB_NAME: cotizador
-      DB_USER: cotizador
+      DB_PORT: 5434
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
       PORT: 3001
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
