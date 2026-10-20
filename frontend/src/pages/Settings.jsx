@@ -33,7 +33,7 @@ export default function Settings() {
         </div>
         <button
           onClick={save}
-          className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
         >
           {saved ? <CheckCircle size={15} /> : <Save size={15} />}
           {saved ? '¡Guardado!' : 'Guardar'}
@@ -59,7 +59,7 @@ export default function Settings() {
                   value={form[key] || ''}
                   onChange={set(key)}
                   placeholder={ph}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                 />
               </div>
             ))}
@@ -72,20 +72,20 @@ export default function Settings() {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Moneda</label>
               <select value={form.currency} onChange={set('currency')}
-                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500">
                 {['CLP', 'USD', 'EUR', 'UF'].map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">IVA (%)</label>
               <input type="number" min="0" value={form.tax_percent || 0} onChange={set('tax_percent')}
-                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Validez (días)</label>
               <input type="number" min="1" value={form.quote_valid_days || 30} onChange={set('quote_valid_days')}
-                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function Settings() {
               value={form.footer_text || ''}
               onChange={set('footer_text')}
               placeholder="Gracias por su preferencia..."
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
             />
           </div>
         </div>

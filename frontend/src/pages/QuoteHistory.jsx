@@ -55,7 +55,7 @@ export default function QuoteHistory() {
                 onClick={() => setFilter(s)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   filter === s
-                    ? 'bg-blue-700 text-white'
+                    ? 'bg-orange-600 text-white'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
@@ -78,9 +78,9 @@ export default function QuoteHistory() {
             </thead>
             <tbody className="divide-y bg-white">
               {visible.map(q => (
-                <tr key={q.id} className={`hover:bg-gray-50 cursor-pointer ${detail?.id === q.id ? 'bg-blue-50' : ''}`}
+                <tr key={q.id} className={`hover:bg-gray-50 cursor-pointer ${detail?.id === q.id ? 'bg-orange-50' : ''}`}
                     onClick={() => openDetail(q.id)}>
-                  <td className="px-5 py-3 font-semibold text-blue-700 text-xs">{q.quote_number}</td>
+                  <td className="px-5 py-3 font-semibold text-orange-600 text-xs">{q.quote_number}</td>
                   <td className="px-5 py-3">
                     <p className="font-medium text-gray-800">{q.client_name}</p>
                     {q.client_company && <p className="text-xs text-gray-400">{q.client_company}</p>}
@@ -103,7 +103,7 @@ export default function QuoteHistory() {
                   <td className="px-5 py-3 text-right" onClick={e => e.stopPropagation()}>
                     <button
                       onClick={() => downloadPDF(q.id)}
-                      className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 hover:text-blue-700 text-gray-500 transition-colors"
+                      className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-100 hover:text-orange-700 text-gray-500 transition-colors"
                     >
                       <Download size={13} />
                     </button>
@@ -132,7 +132,7 @@ export default function QuoteHistory() {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => downloadPDF(detail.id)}
-                      className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
+                      className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg">
                 <Download size={12} /> PDF
               </button>
               <button onClick={() => setDetail(null)} className="p-1.5 rounded-lg hover:bg-gray-100">
@@ -183,7 +183,7 @@ export default function QuoteHistory() {
                   <span>{fmt(detail.tax_amount, detail.currency)}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-blue-800 border-t pt-2 mt-1">
+              <div className="flex justify-between font-bold text-gray-900 border-t pt-2 mt-1">
                 <span>TOTAL</span>
                 <span>{fmt(detail.total, detail.currency)}</span>
               </div>

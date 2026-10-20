@@ -50,13 +50,13 @@ export default function AdminServices() {
           onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
           placeholder={opts.ph}
           rows={2}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
         />
       ) : opts.select ? (
         <select
           value={form[key] || ''}
           onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
           {opts.options.map(o => <option key={o}>{o}</option>)}
         </select>
@@ -66,18 +66,18 @@ export default function AdminServices() {
           value={form[key] || ''}
           onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
           placeholder={opts.ph}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
         />
       )}
     </div>
   );
 
   const catColor = {
-    NFC: 'bg-violet-100 text-violet-700',
-    Wallet: 'bg-sky-100 text-sky-700',
-    Web: 'bg-blue-100 text-blue-700',
-    Software: 'bg-indigo-100 text-indigo-700',
-    Otro: 'bg-gray-100 text-gray-600',
+    NFC:      'bg-violet-100 text-violet-700',
+    Wallet:   'bg-sky-100 text-sky-700',
+    Web:      'bg-orange-100 text-orange-700',
+    Software: 'bg-gray-100 text-gray-700',
+    Otro:     'bg-gray-100 text-gray-600',
   };
 
   return (
@@ -92,7 +92,7 @@ export default function AdminServices() {
         {editing !== 'new' && (
           <button
             onClick={startNew}
-            className="flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+            className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
           >
             <Plus size={15} /> Nuevo Servicio
           </button>
@@ -101,7 +101,7 @@ export default function AdminServices() {
 
       {/* Form */}
       {editing && (
-        <div className="bg-white border-2 border-blue-200 rounded-xl p-5 mb-6">
+        <div className="bg-white border-2 border-orange-200 rounded-xl p-5 mb-6">
           <p className="text-sm font-semibold text-gray-700 mb-4">
             {editing === 'new' ? 'Nuevo Servicio' : 'Editar Servicio'}
           </p>
@@ -114,7 +114,7 @@ export default function AdminServices() {
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={save}
-                    className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
               <Check size={14} /> Guardar
             </button>
             <button onClick={cancel}
@@ -165,7 +165,7 @@ export default function AdminServices() {
                 <td className="px-5 py-3">
                   <button
                     onClick={() => startEdit(s)}
-                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-blue-100 hover:text-blue-700 text-gray-500 transition-colors"
+                    className="p-1.5 rounded-lg bg-gray-100 hover:bg-orange-100 hover:text-orange-700 text-gray-500 transition-colors"
                   >
                     <Edit2 size={13} />
                   </button>

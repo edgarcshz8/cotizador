@@ -127,7 +127,7 @@ export default function QuoteBuilder() {
               placeholder="Buscar..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-8 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-8 pr-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
             />
           </div>
         </div>
@@ -146,12 +146,12 @@ export default function QuoteBuilder() {
               {openCats[cat] && items.map(s => {
                 const inCart = cart.find(i => i.service_id === s.id);
                 return (
-                  <div key={s.id} className="px-3 py-2.5 border-t hover:bg-blue-50 transition-colors">
+                  <div key={s.id} className="px-3 py-2.5 border-t hover:bg-orange-50 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-800 leading-tight">{s.name}</p>
                         <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-tight">{s.description}</p>
-                        <p className="text-xs font-bold text-blue-700 mt-1">
+                        <p className="text-xs font-bold text-orange-600 mt-1">
                           {currency} {fmt(s.unit_price)}<span className="font-normal text-gray-500"> / {s.unit_label}</span>
                         </p>
                       </div>
@@ -159,15 +159,15 @@ export default function QuoteBuilder() {
                         onClick={() => addToCart(s)}
                         className={`flex-shrink-0 p-1 rounded-full transition-colors ${
                           inCart
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 hover:bg-blue-600 hover:text-white text-gray-600'
+                            ? 'bg-orange-600 text-white'
+                            : 'bg-gray-100 hover:bg-orange-600 hover:text-white text-gray-600'
                         }`}
                       >
                         <Plus size={13} />
                       </button>
                     </div>
                     {inCart && (
-                      <p className="text-xs text-blue-600 font-medium mt-1">
+                      <p className="text-xs text-orange-600 font-medium mt-1">
                         En cotización: {inCart.quantity}×
                       </p>
                     )}
@@ -205,7 +205,7 @@ export default function QuoteBuilder() {
             <select
               value={currency}
               onChange={e => setCurrency(e.target.value)}
-              className="border rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
             >
               {['CLP', 'USD', 'EUR', 'UF'].map(c => <option key={c}>{c}</option>)}
             </select>
@@ -228,7 +228,7 @@ export default function QuoteBuilder() {
                     value={client[key]}
                     onChange={e => setClient(p => ({ ...p, [key]: e.target.value }))}
                     placeholder={ph}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               ))}
@@ -239,7 +239,7 @@ export default function QuoteBuilder() {
           <div className="bg-white rounded-xl border">
             <div className="px-5 py-3.5 border-b">
               <p className="text-sm font-semibold text-gray-700">
-                Servicios {cart.length > 0 && <span className="text-blue-600">({cart.length})</span>}
+                Servicios {cart.length > 0 && <span className="text-orange-600">({cart.length})</span>}
               </p>
             </div>
 
@@ -280,7 +280,7 @@ export default function QuoteBuilder() {
                         type="number"
                         value={item.unit_price}
                         onChange={e => updatePrice(item.service_id, e.target.value)}
-                        className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                     </div>
                     <div className="col-span-2 text-right">
@@ -308,21 +308,21 @@ export default function QuoteBuilder() {
                   <label className="block text-xs font-medium text-gray-500 mb-1">Descuento (%)</label>
                   <input type="number" min="0" max="100" value={discount}
                     onChange={e => setDiscount(Math.min(100, Math.max(0, parseFloat(e.target.value) || 0)))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">IVA (%)</label>
                   <input type="number" min="0" value={tax}
                     onChange={e => setTax(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Validez (días)</label>
                   <input type="number" min="1" value={validDays}
                     onChange={e => setValidDays(parseInt(e.target.value) || 30)}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               </div>
@@ -334,7 +334,7 @@ export default function QuoteBuilder() {
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="Condiciones de pago, plazos de entrega, aclaraciones..."
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                 />
               </div>
 
@@ -355,7 +355,7 @@ export default function QuoteBuilder() {
                     <span>{currency} {fmt(taxAmt)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-lg font-bold text-blue-800 border-t pt-2 mt-1">
+                <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-1">
                   <span>TOTAL</span>
                   <span>{currency} {fmt(total)}</span>
                 </div>
@@ -364,7 +364,7 @@ export default function QuoteBuilder() {
               <button
                 onClick={handleSubmit}
                 disabled={loading || !client.name.trim()}
-                className="w-full flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
               >
                 <FileDown size={17} />
                 {loading ? 'Generando...' : 'Generar Cotización y Descargar PDF'}
