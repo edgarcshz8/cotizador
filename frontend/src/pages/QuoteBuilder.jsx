@@ -23,6 +23,7 @@ export default function QuoteBuilder() {
   const [showDrop, setShowDrop]       = useState(false);
   const [clientFound, setClientFound] = useState(false);
   const rutRef                        = useRef(null);
+  const skipSearch                    = useRef(false);
 
   useEffect(() => {
     axios.get('/api/services').then(({ data }) => {
@@ -84,6 +85,7 @@ export default function QuoteBuilder() {
 
   // Debounce: buscar mientras el usuario escribe
   useEffect(() => {
+    if (skipSearch.current) { skipSearch.current = false; return; }
     if (rutSearch.trim().length < 2) { setSuggestions([]); setShowDrop(false); return; }
     const timer = setTimeout(async () => {
       try {
@@ -105,6 +107,7 @@ export default function QuoteBuilder() {
   }, []);
 
   const selectClient = (c) => {
+    skipSearch.current = true;
     setClient({ name: c.name || '', email: c.email || '', company: c.company || '', phone: c.phone || '' });
     setRutSearch(c.rut);
     setShowDrop(false);
