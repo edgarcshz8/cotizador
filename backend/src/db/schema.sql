@@ -56,11 +56,13 @@ CREATE TABLE IF NOT EXISTS company_settings (
 
 INSERT INTO company_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 
-INSERT INTO services (name, description, unit_price, unit_label, category) VALUES
-  ('Tarjeta NFC', 'Tarjeta NFC personalizada con diseño e información del negocio, compatibilidad universal con smartphones', 15000, 'tarjeta', 'NFC'),
-  ('Menú NFC + QR', 'Menú digital interactivo accesible mediante tarjeta NFC y código QR, con actualizaciones sin costo adicional', 45000, 'proyecto', 'NFC'),
-  ('Tarjeta de Fidelizar Wallet', 'Tarjeta de fidelización digital compatible con Apple Wallet y Google Wallet, con sistema de puntos', 35000, 'tarjeta', 'Wallet'),
-  ('Página Web Básica', 'Página web informativa con diseño responsive, hasta 5 secciones y formulario de contacto', 250000, 'proyecto', 'Web'),
-  ('Página Web Avanzada', 'Página web con funcionalidades avanzadas, SEO optimizado, blog y panel de administración', 450000, 'proyecto', 'Web'),
-  ('Desarrollo de Software a Medida', 'Desarrollo de aplicación o sistema personalizado según requerimientos específicos del cliente', 90000, 'hora', 'Software')
-ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS clients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rut VARCHAR(20) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  company VARCHAR(255),
+  email VARCHAR(255),
+  phone VARCHAR(50),
+  address TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
