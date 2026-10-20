@@ -6,6 +6,7 @@ import Login from './pages/Login.jsx';
 import QuoteBuilder from './pages/QuoteBuilder.jsx';
 import QuoteHistory from './pages/QuoteHistory.jsx';
 import AdminServices from './pages/AdminServices.jsx';
+import AdminClients from './pages/AdminClients.jsx';
 import Settings from './pages/Settings.jsx';
 import { getToken, removeToken, isLoggedIn } from './utils/auth.js';
 
@@ -43,7 +44,8 @@ export default function App() {
         <Route path="/" element={<Layout onLogout={handleLogout} />}>
           <Route index element={<QuoteBuilder />} />
           <Route path="cotizaciones" element={<QuoteHistory />} />
-          <Route path="servicios" element={<AdminServices />} />
+          <Route path="clientes"    element={<AdminClients />} />
+          <Route path="servicios"   element={<AdminServices />} />
           <Route path="configuracion" element={<Settings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

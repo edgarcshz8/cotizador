@@ -1,9 +1,10 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { FileText, ClipboardList, Package, Settings, LogOut } from 'lucide-react';
+import { FileText, ClipboardList, Package, Settings, LogOut, Users } from 'lucide-react';
 
 const NAV = [
   { to: '/',              icon: FileText,      label: 'Nueva Cotización', exact: true },
   { to: '/cotizaciones',  icon: ClipboardList, label: 'Historial' },
+  { to: '/clientes',      icon: Users,         label: 'Clientes' },
   { to: '/servicios',     icon: Package,       label: 'Servicios' },
   { to: '/configuracion', icon: Settings,      label: 'Configuración' },
 ];

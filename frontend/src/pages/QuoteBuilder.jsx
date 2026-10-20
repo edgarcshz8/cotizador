@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Plus, Minus, Trash2, FileDown, Search, ChevronDown,
-  ChevronRight, X, Package,
+  ChevronRight, X, Package, UserCheck, UserX,
 } from 'lucide-react';
 
 export default function QuoteBuilder() {
@@ -16,8 +16,10 @@ export default function QuoteBuilder() {
   const [validDays, setValidDays] = useState(30);
   const [search, setSearch] = useState('');
   const [openCats, setOpenCats] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(null);
+  const [loading, setLoading]       = useState(false);
+  const [success, setSuccess]       = useState(null);
+  const [rutSearch, setRutSearch]   = useState('');
+  const [rutStatus, setRutStatus]   = useState(null); // 'found' | 'notfound' | null
 
   useEffect(() => {
     axios.get('/api/services').then(({ data }) => {
@@ -76,6 +78,22 @@ export default function QuoteBuilder() {
   };
 
   const removeItem = (id) => setCart(prev => prev.filter(i => i.service_id !== id));
+
+  const searchByRut = async () => {
+    if (!rutSearch.trim()) return;
+    try {
+      const { data } = await axios.get(`/api/clients/rut/${encodeURIComponent(rutSearch.trim())}`);
+      setClient({
+        name:    data.name    || '',
+        email:   data.email   || '',
+        company: data.company || '',
+        phone:   data.phone   || '',
+      });
+      setRutStatus('found');
+    } catch {
+      setRutStatus('notfound');
+    }
+  };
 
   const subtotal = cart.reduce((s, i) => s + i.quantity * i.unit_price, 0);
   const discountAmt = subtotal * (discount / 100);
@@ -217,6 +235,39 @@ export default function QuoteBuilder() {
           {/* Client */}
           <div className="bg-white rounded-xl border p-5">
             <p className="text-sm font-semibold text-gray-700 mb-4">Datos del Cliente</p>
+
+            {/* Búsqueda por RUT */}
+            <div className="flex gap-2 mb-4">
+              <div className="relative flex-1">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar cliente por RUT..."
+                  value={rutSearch}
+                  onChange={e => { setRutSearch(e.target.value); setRutStatus(null); }}
+                  onKeyDown={e => e.key === 'Enter' && searchByRut()}
+                  className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <button
+                onClick={searchByRut}
+                className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Buscar
+              </button>
+            </div>
+
+            {rutStatus === 'found' && (
+              <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mb-4 text-sm">
+                <UserCheck size={15} /> Cliente encontrado — datos cargados automáticamente
+              </div>
+            )}
+            {rutStatus === 'notfound' && (
+              <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 text-sm">
+                <UserX size={15} /> RUT no registrado — ingresa los datos manualmente
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               {[
                 { key: 'name',    label: 'Nombre *',  ph: 'Juan Pérez' },
