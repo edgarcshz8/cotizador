@@ -7,6 +7,7 @@ import authRouter from './routes/auth.js';
 import servicesRouter from './routes/services.js';
 import quotesRouter from './routes/quotes.js';
 import settingsRouter from './routes/settings.js';
+import clientsRouter from './routes/clients.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/services', requireAuth, servicesRouter);
 app.use('/api/quotes',   requireAuth, quotesRouter);
 app.use('/api/settings', requireAuth, settingsRouter);
+app.use('/api/clients',  requireAuth, clientsRouter);
 
 initDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
