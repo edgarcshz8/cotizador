@@ -1,13 +1,13 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: cotizador
+      POSTGRES_USER: cotizador
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -21,17 +21,17 @@ services:
     restart: unless-stopped
     environment:
       DB_HOST: db
-      DB_PORT: 5434
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: 5432
+      DB_NAME: cotizador
+      DB_USER: cotizador
+      DB_PASSWORD: ${DB_PASSWORD:-cotizador_pass}
       PORT: 3001
-      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
     depends_on:
       db:
         condition: service_healthy
 
-    frontend:
+  frontend:
     build: ./frontend
     restart: unless-stopped
     expose:
