@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import axios from 'axios';
-import Layout from './components/Layout.jsx';
+import Layout from './components/Layout.jsx'; 
 import Login from './pages/Login.jsx';
 import QuoteBuilder from './pages/QuoteBuilder.jsx';
 import QuoteHistory from './pages/QuoteHistory.jsx';
