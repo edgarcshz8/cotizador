@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom';
-import { FileText, ClipboardList, Package, Settings } from 'lucide-react';
+import { FileText, ClipboardList, Package, Settings, LogOut } from 'lucide-react';
 
 const NAV = [
   { to: '/',              icon: FileText,      label: 'Nueva Cotización', exact: true },
@@ -8,7 +8,7 @@ const NAV = [
   { to: '/configuracion', icon: Settings,      label: 'Configuración' },
 ];
 
-export default function Layout() {
+export default function Layout({ onLogout }) {
   return (
     <div className="flex h-screen bg-gray-50">
       <aside className="w-60 bg-gray-950 flex flex-col shadow-xl flex-shrink-0">
@@ -37,8 +37,15 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="px-5 py-3 border-t border-gray-800">
-          <p className="text-gray-500 text-xs">v1.0.0</p>
+        <div className="px-3 py-3 border-t border-gray-800 space-y-2">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+          >
+            <LogOut size={16} />
+            Cerrar sesión
+          </button>
+          <p className="text-gray-600 text-xs px-3">v1.0.0</p>
         </div>
       </aside>
 

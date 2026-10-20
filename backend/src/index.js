@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { initDB } from './db/index.js';
+import { requireAuth } from './middleware/auth.js';
+import authRouter from './routes/auth.js';
 import servicesRouter from './routes/services.js';
 import quotesRouter from './routes/quotes.js';
 import settingsRouter from './routes/settings.js';
@@ -17,10 +19,14 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use('/api/services', servicesRouter);
-app.use('/api/quotes', quotesRouter);
-app.use('/api/settings', settingsRouter);
+// Rutas públicas
+app.use('/api/auth', authRouter);
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
+
+// Rutas protegidas
+app.use('/api/services', requireAuth, servicesRouter);
+app.use('/api/quotes',   requireAuth, quotesRouter);
+app.use('/api/settings', requireAuth, settingsRouter);
 
 initDB().then(() => {
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
