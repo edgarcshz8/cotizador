@@ -290,28 +290,13 @@ export function generatePDF(data) {
       y += 16;
     }
 
-    // ── Resumen general ───────────────────────────────────────────────────────
-    const summaryRows = [
-      unicoGroup   && { label: 'Pago único:',    value: fmtCurrency(total,        currency), suffix: '',      color: PRIMARY },
-      mensualGroup && { label: 'Cobro mensual:', value: fmtCurrency(mensualFinal, currency), suffix: ' / mes', color: BILLING_CONFIG.mensual.color },
-      anualGroup   && { label: 'Cobro anual:',   value: fmtCurrency(anualFinal,   currency), suffix: ' / año', color: BILLING_CONFIG.anual.color },
-    ].filter(Boolean);
-
-    const boxH = 14 + summaryRows.length * 20 + 8;
-    ensureSpace(boxH + 16);
-    y += 8;
-    doc.rect(M, y, CW, boxH).fill('#f1f5f9');
-    doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7.5)
-       .text('RESUMEN', M + 10, y + 7, { width: CW - 20 });
-    y += 20;
-    for (const row of summaryRows) {
-      doc.fillColor(DARK).font('Helvetica').fontSize(9)
-         .text(row.label, M + 10, y, { width: CW * 0.45 });
-      doc.fillColor(row.color).font('Helvetica-Bold').fontSize(10)
-         .text(`${row.value}${row.suffix}`, M + 10, y, { width: CW - 20, align: 'right' });
-      y += 20;
-    }
-    y += 2;
+    // ── Total general (suma de todos los tipos) ───────────────────────────────
+    const grandTotal = (unicoGroup ? parseFloat(total) : 0) + mensualFinal + anualFinal;
+    ensureSpace(28);
+    y += 6;
+    doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
+    y += 6;
+    addRow('TOTAL:', fmtCurrency(grandTotal, currency), true);
   } else {
     addRow('Subtotal:', fmtCurrency(subtotal, currency));
     if (parseFloat(discount_percent) > 0) {
