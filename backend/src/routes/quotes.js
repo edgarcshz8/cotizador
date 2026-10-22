@@ -42,7 +42,7 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const {
-    client_company, client_contact, client_email, client_phone, client_city,
+    client_company, client_contact, client_email, client_phone, client_city, client_address,
     items = [], discount_percent = 0, tax_percent = 0,
     notes, currency = 'CLP', valid_days = 30,
   } = req.body;
@@ -66,12 +66,12 @@ router.post('/', async (req, res) => {
 
     const { rows: [quote] } = await client.query(
       `INSERT INTO quotes
-         (quote_number, client_company, client_contact, client_email, client_phone, client_city,
+         (quote_number, client_company, client_contact, client_email, client_phone, client_city, client_address,
           subtotal, discount_percent, discount_amount, tax_percent, tax_amount,
           total, notes, currency, valid_days)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
-      [quoteNumber, client_company, client_contact || null, client_email || null, client_phone || null, client_city || null,
+      [quoteNumber, client_company, client_contact || null, client_email || null, client_phone || null, client_city || null, client_address || null,
        subtotal, discount_percent, discountAmt, tax_percent, taxAmt,
        total, notes, currency, valid_days]
     );

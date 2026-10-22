@@ -15,7 +15,7 @@ const BILLING_STYLE = {
 export default function QuoteBuilder() {
   const [services, setServices]         = useState([]);
   const [cart, setCart]                 = useState([]);  // flat list of component items
-  const [client, setClient]             = useState({ company: '', contact: '', email: '', phone: '', city: '' });
+  const [client, setClient]             = useState({ company: '', contact: '', email: '', phone: '', city: '', address: '' });
   const [discount, setDiscount]         = useState(0);
   const [tax, setTax]                   = useState(0);
   const [notes, setNotes]               = useState('');
@@ -130,7 +130,7 @@ export default function QuoteBuilder() {
 
   const selectClient = (c) => {
     skipSearch.current = true;
-    setClient({ company: c.company || '', contact: c.contact || '', email: c.email || '', phone: c.phone || '', city: c.city || '' });
+    setClient({ company: c.company || '', contact: c.contact || '', email: c.email || '', phone: c.phone || '', city: c.city || '', address: c.address || '' });
     setRutSearch(c.rut);
     setShowDrop(false);
     setSuggestions([]);
@@ -179,11 +179,12 @@ export default function QuoteBuilder() {
     setLoading(true);
     try {
       const { data } = await axios.post('/api/quotes', {
-        client_company: client.company,
-        client_contact: client.contact,
-        client_email:   client.email,
-        client_phone:   client.phone,
-        client_city:    client.city,
+        client_company:   client.company,
+        client_contact:   client.contact,
+        client_email:     client.email,
+        client_phone:     client.phone,
+        client_city:      client.city,
+        client_address:   client.address,
         items: cart.map(i => ({
           service_id:   i.service_id,
           service_name: i.service_name_display,  // component name on the line
@@ -205,7 +206,7 @@ export default function QuoteBuilder() {
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setCart([]);
-      setClient({ company: '', contact: '', email: '', phone: '', city: '' });
+      setClient({ company: '', contact: '', email: '', phone: '', city: '', address: '' });
       setNotes('');
       setRutSearch('');
       setClientFound(false);
@@ -372,6 +373,7 @@ export default function QuoteBuilder() {
                 { key: 'contact', label: 'Contacto',         ph: 'Juan Pérez' },
                 { key: 'email',   label: 'Correo Empresa',   ph: 'contacto@empresa.cl', type: 'email' },
                 { key: 'phone',   label: 'Teléfono',         ph: '+56 9 1234 5678' },
+                { key: 'address', label: 'Dirección',        ph: 'Av. Principal 123' },
                 { key: 'city',    label: 'Ciudad',            ph: 'Santiago' },
               ].map(({ key, label, ph, type = 'text' }) => (
                 <div key={key}>

@@ -135,4 +135,8 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='company_settings' AND column_name='city') THEN
     ALTER TABLE company_settings ADD COLUMN city VARCHAR(100);
   END IF;
+  -- quotes: add client_address
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_address') THEN
+    ALTER TABLE quotes ADD COLUMN client_address VARCHAR(255);
+  END IF;
 END $$;

@@ -19,7 +19,7 @@ const BILLING_CONFIG = {
 
 export function generatePDF(data) {
   const {
-    quote_number, client_company, client_contact, client_email, client_phone, client_city,
+    quote_number, client_company, client_contact, client_email, client_phone, client_city, client_address,
     items = [], subtotal, discount_percent, discount_amount,
     tax_percent, tax_amount, total, notes, currency,
     valid_days, created_at, status, company = {},
@@ -67,37 +67,38 @@ export function generatePDF(data) {
 
   let y = 125;
 
-  // ── Client block — full width, sin badge de estado ────────────────────────
-  doc.rect(M, y, CW, 90).fill(LIGHT);
+  // ── Client block ──────────────────────────────────────────────────────────
+  doc.rect(M, y, CW, 105).fill(LIGHT);
 
   doc.fillColor(PRIMARY).font('Helvetica-Bold').fontSize(7)
      .text('CLIENTE', M + 10, y + 9);
 
-  // Nombre empresa en toda la línea para evitar desborde
   doc.fillColor(DARK).font('Helvetica-Bold').fontSize(11)
      .text(client_company || '-', M + 10, y + 22, { width: CW - 20, lineBreak: false });
 
-  // Fila 1: contacto · email
   const row1 = [client_contact, client_email].filter(Boolean).join('   ·   ');
-  // Fila 2: teléfono · ciudad
-  const row2 = [client_phone, client_city].filter(Boolean).join('   ·   ');
+  const row2 = [client_phone].filter(Boolean).join('');
+  const row3 = [client_address, client_city].filter(Boolean).join(', ');
 
   if (row1) {
     doc.fillColor(GRAY).font('Helvetica').fontSize(8.5)
-       .text(row1, M + 10, y + 42, { width: CW - 20 });
+       .text(row1, M + 10, y + 40, { width: CW - 20 });
   }
   if (row2) {
     doc.fillColor(GRAY).font('Helvetica').fontSize(8.5)
-       .text(row2, M + 10, y + 57, { width: CW - 20 });
+       .text(row2, M + 10, y + 55, { width: CW - 20 });
+  }
+  if (row3) {
+    doc.fillColor(GRAY).font('Helvetica').fontSize(8.5)
+       .text(row3, M + 10, y + 70, { width: CW - 20 });
   }
 
-  // Estado de cotización como pequeña etiqueta de texto (sin cuadro)
   const statusLabel = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' };
   const statusColor = { pendiente: '#d97706', aceptada: '#059669', rechazada: '#dc2626' };
   doc.fillColor(statusColor[status] || '#6b7280').font('Helvetica-Bold').fontSize(8)
-     .text(`Estado: ${statusLabel[status] || 'Pendiente'}`, M + 10, y + 72, { width: CW - 20 });
+     .text(`Estado: ${statusLabel[status] || 'Pendiente'}`, M + 10, y + 88, { width: CW - 20 });
 
-  y += 108;
+  y += 123;
 
   // ── Items table ───────────────────────────────────────────────────────────────
   const descW = CW - 165;
@@ -113,7 +114,7 @@ export function generatePDF(data) {
   doc.text('DESCRIPCIÓN',  cols.desc  + 5, y + 7);
   doc.text('CANT.',         cols.qty,       y + 7, { width: 40, align: 'center' });
   doc.text('PRECIO UNIT.',  cols.price,     y + 7, { width: 65, align: 'right' });
-  doc.text('SUBTOTAL',      cols.sub,       y + 7, { width: 60, align: 'right' });
+  doc.text('SUBTOTAL',      cols.sub,       y + 7, { width: 52, align: 'right' });
   y += 22;
 
   // Agrupar items por tipo de cobro: único → mensual → anual
@@ -175,7 +176,7 @@ export function generatePDF(data) {
         doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
            .text(String(item.quantity),                   cols.qty,   y + 6, { width: 40, align: 'center' })
            .text(fmtCurrency(item.unit_price, currency),  cols.price, y + 6, { width: 65, align: 'right' })
-           .text(fmtCurrency(item.subtotal,   currency),  cols.sub,   y + 6, { width: 60, align: 'right' });
+           .text(fmtCurrency(item.subtotal,   currency),  cols.sub,   y + 6, { width: 52, align: 'right' });
         y += rh;
         rowIndex++;
       });
