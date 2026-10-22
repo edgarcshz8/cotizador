@@ -70,6 +70,7 @@ export default function QuoteBuilder() {
           service_name: service.name,   // parent (for grouping + PDF)
           service_name_display: comp.name,  // what shows on the line
           billing_type: comp.billing_type || 'unico',
+          taxable:      comp.taxable !== false,
           unit_price:   parseFloat(comp.unit_price) || 0,
           quantity:     1,
         }));
@@ -90,6 +91,7 @@ export default function QuoteBuilder() {
           service_name: service.name,
           service_name_display: service.name,
           billing_type: service.billing_type || 'unico',
+          taxable:      true,
           unit_price:   parseFloat(service.unit_price) || 0,
           quantity:     1,
         }];
@@ -146,8 +148,18 @@ export default function QuoteBuilder() {
 
   const discountAmt  = subtotalUnico * (discount / 100);
   const afterDisc    = subtotalUnico - discountAmt;
-  const taxAmt       = afterDisc * (tax / 100);
-  const totalInicial = afterDisc + taxAmt;
+
+  const taxableUnicoTotal   = unicoItems.filter(i => i.taxable !== false).reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const taxableRatio        = subtotalUnico > 0 ? taxableUnicoTotal / subtotalUnico : 0;
+  const taxAmt              = afterDisc * taxableRatio * (tax / 100);
+  const totalInicial        = afterDisc + taxAmt;
+
+  const taxableMensualTotal = mensualItems.filter(i => i.taxable !== false).reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const mensualTaxAmt       = taxableMensualTotal * (tax / 100);
+
+  const taxableAnualTotal   = anualItems.filter(i => i.taxable !== false).reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const anualTaxAmt         = taxableAnualTotal * (tax / 100);
+
   const hasMixed     = mensualItems.length > 0 || anualItems.length > 0;
 
   const fmt = (n) => new Intl.NumberFormat('es-CL').format(Math.round(n));
@@ -178,6 +190,7 @@ export default function QuoteBuilder() {
           service_group: i.service_name !== i.service_name_display ? i.service_name : null,
           unit_price:   i.unit_price,
           billing_type: i.billing_type,
+          taxable:      i.taxable !== false,
           quantity:     i.quantity,
         })),
         discount_percent: discount,
@@ -528,16 +541,44 @@ export default function QuoteBuilder() {
                     )}
                     <div className="pt-2 space-y-1.5">
                       {mensualItems.length > 0 && (
-                        <div className="flex justify-between text-sm font-semibold text-emerald-700">
-                          <span>Cobro mensual</span>
-                          <span>{currency} {fmt(subtotalMensual)} / mes</span>
-                        </div>
+                        <>
+                          {mensualTaxAmt > 0 && tax > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs text-gray-400">
+                                <span>Mensual neto</span>
+                                <span>{currency} {fmt(subtotalMensual)} / mes</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-400">
+                                <span>IVA ({tax}%)</span>
+                                <span>{currency} {fmt(mensualTaxAmt)} / mes</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                            <span>Cobro mensual</span>
+                            <span>{currency} {fmt(subtotalMensual + mensualTaxAmt)} / mes</span>
+                          </div>
+                        </>
                       )}
                       {anualItems.length > 0 && (
-                        <div className="flex justify-between text-sm font-semibold text-amber-700">
-                          <span>Cobro anual</span>
-                          <span>{currency} {fmt(subtotalAnual)} / año</span>
-                        </div>
+                        <>
+                          {anualTaxAmt > 0 && tax > 0 && (
+                            <>
+                              <div className="flex justify-between text-xs text-gray-400">
+                                <span>Anual neto</span>
+                                <span>{currency} {fmt(subtotalAnual)} / año</span>
+                              </div>
+                              <div className="flex justify-between text-xs text-gray-400">
+                                <span>IVA ({tax}%)</span>
+                                <span>{currency} {fmt(anualTaxAmt)} / año</span>
+                              </div>
+                            </>
+                          )}
+                          <div className="flex justify-between text-sm font-semibold text-amber-700">
+                            <span>Cobro anual</span>
+                            <span>{currency} {fmt(subtotalAnual + anualTaxAmt)} / año</span>
+                          </div>
+                        </>
                       )}
                     </div>
                   </>

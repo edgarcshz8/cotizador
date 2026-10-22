@@ -119,7 +119,16 @@ BEGIN
       name VARCHAR(255) NOT NULL,
       unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
       billing_type VARCHAR(20) DEFAULT 'unico',
+      taxable BOOLEAN DEFAULT true,
       sort_order INTEGER DEFAULT 0
     );
+  END IF;
+  -- service_components: add taxable column (for existing tables)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='service_components' AND column_name='taxable') THEN
+    ALTER TABLE service_components ADD COLUMN taxable BOOLEAN DEFAULT true;
+  END IF;
+  -- quote_items: add taxable column
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quote_items' AND column_name='taxable') THEN
+    ALTER TABLE quote_items ADD COLUMN taxable BOOLEAN DEFAULT true;
   END IF;
 END $$;

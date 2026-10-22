@@ -12,6 +12,7 @@ const withComponents = `
           'name',         sc.name,
           'unit_price',   sc.unit_price,
           'billing_type', sc.billing_type,
+          'taxable',      sc.taxable,
           'sort_order',   sc.sort_order
         ) ORDER BY sc.sort_order, sc.name
       ) FILTER (WHERE sc.id IS NOT NULL),
@@ -45,9 +46,9 @@ async function upsertComponents(client, serviceId, components) {
   await client.query('DELETE FROM service_components WHERE service_id = $1', [serviceId]);
   for (const [i, comp] of components.entries()) {
     await client.query(
-      `INSERT INTO service_components (service_id, name, unit_price, billing_type, sort_order)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [serviceId, comp.name, parseFloat(comp.unit_price) || 0, comp.billing_type || 'unico', i]
+      `INSERT INTO service_components (service_id, name, unit_price, billing_type, taxable, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [serviceId, comp.name, parseFloat(comp.unit_price) || 0, comp.billing_type || 'unico', comp.taxable !== false, i]
     );
   }
 }

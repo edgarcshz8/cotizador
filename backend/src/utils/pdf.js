@@ -223,7 +223,7 @@ export function generatePDF(data) {
       if (parseFloat(discount_percent) > 0) {
         addRow(`Descuento (${fmtPercent(discount_percent)}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
       }
-      if (parseFloat(tax_percent) > 0) {
+      if (parseFloat(tax_percent) > 0 && parseFloat(tax_amount) > 0) {
         addRow(`IVA (${fmtPercent(tax_percent)}%):`, fmtCurrency(tax_amount, currency));
       }
       doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
@@ -233,27 +233,51 @@ export function generatePDF(data) {
     }
 
     if (mensualGroup) {
-      const mensualTotal = mensualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const mensualBase    = mensualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const mensualTaxable = mensualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const mensualTax     = mensualTaxable * (parseFloat(tax_percent) / 100);
+      if (mensualTax > 0) {
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
+           .text('Mensual neto:', tx, y, { width: tw * 0.5 })
+           .text(`${fmtCurrency(mensualBase, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        y += 13;
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
+           .text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 })
+           .text(`${fmtCurrency(mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        y += 13;
+      }
       doc.fillColor(BILLING_CONFIG.mensual.color).font('Helvetica-Bold').fontSize(10)
          .text('Cobro Mensual:', tx, y, { width: tw * 0.5 })
-         .text(`${fmtCurrency(mensualTotal, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+         .text(`${fmtCurrency(mensualBase + mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
 
     if (anualGroup) {
-      const anualTotal = anualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const anualBase    = anualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const anualTaxable = anualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
+      const anualTax     = anualTaxable * (parseFloat(tax_percent) / 100);
+      if (anualTax > 0) {
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
+           .text('Anual neto:', tx, y, { width: tw * 0.5 })
+           .text(`${fmtCurrency(anualBase, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        y += 13;
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
+           .text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 })
+           .text(`${fmtCurrency(anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        y += 13;
+      }
       doc.fillColor(BILLING_CONFIG.anual.color).font('Helvetica-Bold').fontSize(10)
          .text('Cobro Anual:', tx, y, { width: tw * 0.5 })
-         .text(`${fmtCurrency(anualTotal, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+         .text(`${fmtCurrency(anualBase + anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
   } else {
     addRow('Subtotal:', fmtCurrency(subtotal, currency));
     if (parseFloat(discount_percent) > 0) {
-      addRow(`Descuento (${discount_percent}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
+      addRow(`Descuento (${fmtPercent(discount_percent)}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
     }
-    if (parseFloat(tax_percent) > 0) {
-      addRow(`IVA (${tax_percent}%):`, fmtCurrency(tax_amount, currency));
+    if (parseFloat(tax_percent) > 0 && parseFloat(tax_amount) > 0) {
+      addRow(`IVA (${fmtPercent(tax_percent)}%):`, fmtCurrency(tax_amount, currency));
     }
     doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
     y += 6;

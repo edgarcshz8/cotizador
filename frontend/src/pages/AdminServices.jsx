@@ -17,7 +17,7 @@ const BILLING_STYLE = {
   anual:   'bg-amber-100 text-amber-700 border-amber-300',
 };
 
-const EMPTY_COMP = { name: '', unit_price: '', billing_type: 'unico' };
+const EMPTY_COMP = { name: '', unit_price: '', billing_type: 'unico', taxable: true };
 const EMPTY = {
   name: '', description: '', unit_price: '', unit_label: 'proyecto',
   category: 'Web', billing_type: 'unico', active: true, components: [],
@@ -167,14 +167,15 @@ export default function AdminServices() {
               <div className="space-y-2">
                 {/* Header */}
                 <div className="grid grid-cols-12 text-xs font-medium text-gray-400 px-1">
-                  <span className="col-span-5">Nombre</span>
+                  <span className="col-span-4">Nombre</span>
                   <span className="col-span-3">Precio</span>
                   <span className="col-span-3">Tipo</span>
+                  <span className="col-span-1 text-center">IVA</span>
                   <span className="col-span-1" />
                 </div>
                 {form.components.map((comp, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-center bg-gray-50 rounded-lg px-2 py-2">
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <input
                         value={comp.name}
                         onChange={e => updateComp(i, 'name', e.target.value)}
@@ -206,6 +207,15 @@ export default function AdminServices() {
                           {bt.label}
                         </button>
                       ))}
+                    </div>
+                    <div className="col-span-1 flex justify-center">
+                      <input
+                        type="checkbox"
+                        checked={comp.taxable !== false}
+                        onChange={e => updateComp(i, 'taxable', e.target.checked)}
+                        title="Afecto a IVA"
+                        className="w-4 h-4 accent-orange-600 cursor-pointer"
+                      />
                     </div>
                     <div className="col-span-1 flex justify-end">
                       <button

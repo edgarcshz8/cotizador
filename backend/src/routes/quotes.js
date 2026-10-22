@@ -51,12 +51,16 @@ router.post('/', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Discount and IVA apply only to one-time (unico) items; recurring items are shown separately
+    // Subtotal = unico items; IVA applies only to taxable items (per-item flag)
     const unicoItems = items.filter(i => !i.billing_type || i.billing_type === 'unico');
     const subtotal = unicoItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
     const discountAmt = subtotal * (discount_percent / 100);
     const afterDiscount = subtotal - discountAmt;
-    const taxAmt = afterDiscount * (tax_percent / 100);
+    const taxableUnicoTotal = unicoItems
+      .filter(i => i.taxable !== false)
+      .reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
+    const taxableRatio = subtotal > 0 ? taxableUnicoTotal / subtotal : 0;
+    const taxAmt = afterDiscount * taxableRatio * (tax_percent / 100);
     const total = afterDiscount + taxAmt;
     const quoteNumber = await nextQuoteNumber();
 
@@ -75,15 +79,16 @@ router.post('/', async (req, res) => {
     for (const item of items) {
       await client.query(
         `INSERT INTO quote_items
-           (quote_id, service_id, service_name, service_group, description, quantity, unit_price, subtotal, billing_type)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+           (quote_id, service_id, service_name, service_group, description, quantity, unit_price, subtotal, billing_type, taxable)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
         [quote.id, item.service_id || null,
          item.service_name,
          item.service_group || null,
          item.description || '',
          item.quantity, item.unit_price,
          item.quantity * item.unit_price,
-         item.billing_type || 'unico']
+         item.billing_type || 'unico',
+         item.taxable !== false]
       );
     }
 
