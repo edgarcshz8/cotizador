@@ -205,7 +205,16 @@ export function generatePDF(data) {
   const tx = M + CW * 0.52;
   const tw = CW * 0.48;
 
+  // Verifica espacio antes de dibujar; si no alcanza agrega página y reinicia y
+  const ensureSpace = (needed = 30) => {
+    if (y + needed > doc.page.height - doc.page.margins.bottom) {
+      doc.addPage();
+      y = doc.page.margins.top;
+    }
+  };
+
   const addRow = (label, value, bold = false, valueColor = DARK) => {
+    ensureSpace(bold ? 22 : 16);
     doc.fillColor(bold ? PRIMARY : GRAY)
        .font(bold ? 'Helvetica-Bold' : 'Helvetica')
        .fontSize(bold ? 11 : 9)
@@ -238,19 +247,20 @@ export function generatePDF(data) {
       const mensualBase    = mensualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const mensualTaxable = mensualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const mensualTax     = mensualTaxable * (parseFloat(tax_percent) / 100);
+      ensureSpace(mensualTax > 0 ? 52 : 20);
       if (mensualTax > 0) {
-        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-           .text('Mensual neto:', tx, y, { width: tw * 0.5 })
-           .text(`${fmtCurrency(mensualBase, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9);
+        doc.text('Mensual neto:', tx, y, { width: tw * 0.5 });
+        doc.text(`${fmtCurrency(mensualBase, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
         y += 13;
-        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-           .text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 })
-           .text(`${fmtCurrency(mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9);
+        doc.text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 });
+        doc.text(`${fmtCurrency(mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
         y += 13;
       }
-      doc.fillColor(BILLING_CONFIG.mensual.color).font('Helvetica-Bold').fontSize(10)
-         .text('Cobro Mensual:', tx, y, { width: tw * 0.5 })
-         .text(`${fmtCurrency(mensualBase + mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+      doc.fillColor(BILLING_CONFIG.mensual.color).font('Helvetica-Bold').fontSize(10);
+      doc.text('Cobro Mensual:', tx, y, { width: tw * 0.5 });
+      doc.text(`${fmtCurrency(mensualBase + mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
 
@@ -258,19 +268,20 @@ export function generatePDF(data) {
       const anualBase    = anualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const anualTaxable = anualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const anualTax     = anualTaxable * (parseFloat(tax_percent) / 100);
+      ensureSpace(anualTax > 0 ? 52 : 20);
       if (anualTax > 0) {
-        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-           .text('Anual neto:', tx, y, { width: tw * 0.5 })
-           .text(`${fmtCurrency(anualBase, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9);
+        doc.text('Anual neto:', tx, y, { width: tw * 0.5 });
+        doc.text(`${fmtCurrency(anualBase, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
         y += 13;
-        doc.fillColor(GRAY).font('Helvetica').fontSize(9)
-           .text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 })
-           .text(`${fmtCurrency(anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+        doc.fillColor(GRAY).font('Helvetica').fontSize(9);
+        doc.text(`IVA (${fmtPercent(tax_percent)}%):`, tx, y, { width: tw * 0.5 });
+        doc.text(`${fmtCurrency(anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
         y += 13;
       }
-      doc.fillColor(BILLING_CONFIG.anual.color).font('Helvetica-Bold').fontSize(10)
-         .text('Cobro Anual:', tx, y, { width: tw * 0.5 })
-         .text(`${fmtCurrency(anualBase + anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+      doc.fillColor(BILLING_CONFIG.anual.color).font('Helvetica-Bold').fontSize(10);
+      doc.text('Cobro Anual:', tx, y, { width: tw * 0.5 });
+      doc.text(`${fmtCurrency(anualBase + anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
   } else {
@@ -298,7 +309,14 @@ export function generatePDF(data) {
   }
 
   // ── Footer ────────────────────────────────────────────────────────────────────
+  // Eliminar margen inferior para que doc.text() no fuerce nueva página al dibujar el footer
+  doc.page.margins.bottom = 0;
   const footerY = doc.page.height - 42;
+  // Si el contenido se solapa con el footer, agregar página nueva
+  if (y > footerY - 10) {
+    doc.addPage();
+    doc.page.margins.bottom = 0;
+  }
   doc.rect(0, footerY, PW, 42).fill('#1e3a5f');
   doc.fillColor('#93c5fd').font('Helvetica').fontSize(8).text(
     company.footer_text || 'Gracias por su preferencia. Esta cotización es válida por el período indicado.',
