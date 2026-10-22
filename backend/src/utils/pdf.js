@@ -68,7 +68,7 @@ export function generatePDF(data) {
   let y = 125;
 
   // ── Client block ──────────────────────────────────────────────────────────
-  doc.rect(M, y, CW, 105).fill(LIGHT);
+  doc.rect(M, y, CW, 90).fill(LIGHT);
 
   doc.fillColor(PRIMARY).font('Helvetica-Bold').fontSize(7)
      .text('CLIENTE', M + 10, y + 9);
@@ -93,12 +93,7 @@ export function generatePDF(data) {
        .text(row3, M + 10, y + 70, { width: CW - 20 });
   }
 
-  const statusLabel = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' };
-  const statusColor = { pendiente: '#d97706', aceptada: '#059669', rechazada: '#dc2626' };
-  doc.fillColor(statusColor[status] || '#6b7280').font('Helvetica-Bold').fontSize(8)
-     .text(`Estado: ${statusLabel[status] || 'Pendiente'}`, M + 10, y + 88, { width: CW - 20 });
-
-  y += 123;
+  y += 113;
 
   // ── Items table ───────────────────────────────────────────────────────────────
   const descW = CW - 165;
