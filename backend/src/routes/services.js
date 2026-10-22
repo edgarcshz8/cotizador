@@ -24,12 +24,12 @@ router.get('/all', async (_req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { name, description, unit_price, unit_label, category } = req.body;
+  const { name, description, unit_price, unit_label, category, billing_type } = req.body;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO services (name, description, unit_price, unit_label, category)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name, description, unit_price, unit_label || 'unidad', category || 'Otro']
+      `INSERT INTO services (name, description, unit_price, unit_label, category, billing_type)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, description, unit_price, unit_label || 'unidad', category || 'Otro', billing_type || 'unico']
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -39,13 +39,13 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, description, unit_price, unit_label, category, active } = req.body;
+  const { name, description, unit_price, unit_label, category, active, billing_type } = req.body;
   try {
     const { rows } = await pool.query(
       `UPDATE services
-       SET name=$1, description=$2, unit_price=$3, unit_label=$4, category=$5, active=$6
-       WHERE id=$7 RETURNING *`,
-      [name, description, unit_price, unit_label, category, active, id]
+       SET name=$1, description=$2, unit_price=$3, unit_label=$4, category=$5, active=$6, billing_type=$7
+       WHERE id=$8 RETURNING *`,
+      [name, description, unit_price, unit_label, category, active, billing_type || 'unico', id]
     );
     res.json(rows[0]);
   } catch (err) {

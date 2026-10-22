@@ -51,7 +51,9 @@ router.post('/', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
+    // Discount and IVA apply only to one-time (unico) items; recurring items are shown separately
+    const unicoItems = items.filter(i => !i.billing_type || i.billing_type === 'unico');
+    const subtotal = unicoItems.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
     const discountAmt = subtotal * (discount_percent / 100);
     const afterDiscount = subtotal - discountAmt;
     const taxAmt = afterDiscount * (tax_percent / 100);
@@ -73,11 +75,11 @@ router.post('/', async (req, res) => {
     for (const item of items) {
       await client.query(
         `INSERT INTO quote_items
-           (quote_id, service_id, service_name, description, quantity, unit_price, subtotal)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+           (quote_id, service_id, service_name, description, quantity, unit_price, subtotal, billing_type)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
         [quote.id, item.service_id || null, item.service_name,
          item.description || '', item.quantity, item.unit_price,
-         item.quantity * item.unit_price]
+         item.quantity * item.unit_price, item.billing_type || 'unico']
       );
     }
 

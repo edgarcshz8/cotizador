@@ -99,4 +99,12 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_city') THEN
     ALTER TABLE quotes ADD COLUMN client_city VARCHAR(100);
   END IF;
+  -- services: add billing_type
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='billing_type') THEN
+    ALTER TABLE services ADD COLUMN billing_type VARCHAR(20) DEFAULT 'unico';
+  END IF;
+  -- quote_items: add billing_type
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quote_items' AND column_name='billing_type') THEN
+    ALTER TABLE quote_items ADD COLUMN billing_type VARCHAR(20) DEFAULT 'unico';
+  END IF;
 END $$;

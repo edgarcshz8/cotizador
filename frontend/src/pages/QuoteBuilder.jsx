@@ -5,6 +5,13 @@ import {
   ChevronRight, X, Package, UserCheck,
 } from 'lucide-react';
 
+const BILLING_LABEL = { unico: 'Pago Único', mensual: 'Mensual', anual: 'Anual' };
+const BILLING_STYLE = {
+  unico:   'bg-blue-100 text-blue-700',
+  mensual: 'bg-emerald-100 text-emerald-700',
+  anual:   'bg-amber-100 text-amber-700',
+};
+
 export default function QuoteBuilder() {
   const [services, setServices] = useState([]);
   const [cart, setCart] = useState([]);
@@ -63,6 +70,7 @@ export default function QuoteBuilder() {
         unit_price: parseFloat(service.unit_price),
         quantity: 1,
         unit_label: service.unit_label,
+        billing_type: service.billing_type || 'unico',
       }];
     });
   };
@@ -83,7 +91,6 @@ export default function QuoteBuilder() {
 
   const removeItem = (id) => setCart(prev => prev.filter(i => i.service_id !== id));
 
-  // Debounce: buscar mientras el usuario escribe
   useEffect(() => {
     if (skipSearch.current) { skipSearch.current = false; return; }
     if (rutSearch.trim().length < 2) { setSuggestions([]); setShowDrop(false); return; }
@@ -99,7 +106,6 @@ export default function QuoteBuilder() {
     return () => clearTimeout(timer);
   }, [rutSearch]);
 
-  // Cerrar dropdown al hacer click fuera
   useEffect(() => {
     const handler = (e) => { if (rutRef.current && !rutRef.current.contains(e.target)) setShowDrop(false); };
     document.addEventListener('mousedown', handler);
@@ -115,11 +121,21 @@ export default function QuoteBuilder() {
     setClientFound(true);
   };
 
-  const subtotal = cart.reduce((s, i) => s + i.quantity * i.unit_price, 0);
-  const discountAmt = subtotal * (discount / 100);
-  const afterDiscount = subtotal - discountAmt;
-  const taxAmt = afterDiscount * (tax / 100);
-  const total = afterDiscount + taxAmt;
+  // Totals grouped by billing_type
+  const unicoItems   = cart.filter(i => !i.billing_type || i.billing_type === 'unico');
+  const mensualItems = cart.filter(i => i.billing_type === 'mensual');
+  const anualItems   = cart.filter(i => i.billing_type === 'anual');
+
+  const subtotalUnico   = unicoItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const subtotalMensual = mensualItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const subtotalAnual   = anualItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+
+  const discountAmt   = subtotalUnico * (discount / 100);
+  const afterDiscount = subtotalUnico - discountAmt;
+  const taxAmt        = afterDiscount * (tax / 100);
+  const totalInicial  = afterDiscount + taxAmt;
+
+  const hasMixed = mensualItems.length > 0 || anualItems.length > 0;
 
   const fmt = (n) => new Intl.NumberFormat('es-CL').format(Math.round(n));
 
@@ -187,12 +203,18 @@ export default function QuoteBuilder() {
 
               {openCats[cat] && items.map(s => {
                 const inCart = cart.find(i => i.service_id === s.id);
+                const bt = s.billing_type || 'unico';
                 return (
                   <div key={s.id} className="px-3 py-2.5 border-t hover:bg-orange-50 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-gray-800 leading-tight">{s.name}</p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2 leading-tight">{s.description}</p>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <p className="text-xs font-semibold text-gray-800 leading-tight">{s.name}</p>
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${BILLING_STYLE[bt]}`}>
+                            {BILLING_LABEL[bt]}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 line-clamp-2 leading-tight">{s.description}</p>
                         <p className="text-xs font-bold text-orange-600 mt-1">
                           {currency} {fmt(s.unit_price)}<span className="font-normal text-gray-500"> / {s.unit_label}</span>
                         </p>
@@ -257,7 +279,6 @@ export default function QuoteBuilder() {
           <div className="bg-white rounded-xl border p-5">
             <p className="text-sm font-semibold text-gray-700 mb-4">Datos del Cliente</p>
 
-            {/* Autocomplete por RUT */}
             <div className="relative mb-4" ref={rutRef}>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
               <input
@@ -269,7 +290,6 @@ export default function QuoteBuilder() {
                 onKeyDown={e => e.key === 'Escape' && setShowDrop(false)}
                 className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
-
               {showDrop && (
                 <div className="absolute z-20 top-full mt-1 w-full bg-white border rounded-xl shadow-lg overflow-hidden">
                   {suggestions.map(c => (
@@ -337,45 +357,53 @@ export default function QuoteBuilder() {
                   <span className="col-span-2 text-right">Subtotal</span>
                   <span className="col-span-1" />
                 </div>
-                {cart.map(item => (
-                  <div key={item.service_id}
-                       className="grid grid-cols-12 items-center px-5 py-3 border-b last:border-0 hover:bg-gray-50">
-                    <div className="col-span-4">
-                      <p className="text-sm font-medium text-gray-800">{item.service_name}</p>
-                      <p className="text-xs text-gray-400">{item.unit_label}</p>
+                {cart.map(item => {
+                  const bt = item.billing_type || 'unico';
+                  return (
+                    <div key={item.service_id}
+                         className="grid grid-cols-12 items-center px-5 py-3 border-b last:border-0 hover:bg-gray-50">
+                      <div className="col-span-4">
+                        <p className="text-sm font-medium text-gray-800">{item.service_name}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <p className="text-xs text-gray-400">{item.unit_label}</p>
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${BILLING_STYLE[bt]}`}>
+                            {BILLING_LABEL[bt]}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="col-span-2 flex items-center justify-center gap-1">
+                        <button onClick={() => updateQty(item.service_id, -1)}
+                                className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                          <Minus size={11} />
+                        </button>
+                        <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
+                        <button onClick={() => updateQty(item.service_id, 1)}
+                                className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                          <Plus size={11} />
+                        </button>
+                      </div>
+                      <div className="col-span-3 flex justify-end">
+                        <input
+                          type="number"
+                          value={item.unit_price}
+                          onChange={e => updatePrice(item.service_id, e.target.value)}
+                          className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div className="col-span-2 text-right">
+                        <span className="text-sm font-semibold text-gray-800">
+                          {currency} {fmt(item.quantity * item.unit_price)}
+                        </span>
+                      </div>
+                      <div className="col-span-1 flex justify-end">
+                        <button onClick={() => removeItem(item.service_id)}
+                                className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
-                    <div className="col-span-2 flex items-center justify-center gap-1">
-                      <button onClick={() => updateQty(item.service_id, -1)}
-                              className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
-                        <Minus size={11} />
-                      </button>
-                      <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.service_id, 1)}
-                              className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
-                        <Plus size={11} />
-                      </button>
-                    </div>
-                    <div className="col-span-3 flex justify-end">
-                      <input
-                        type="number"
-                        value={item.unit_price}
-                        onChange={e => updatePrice(item.service_id, e.target.value)}
-                        className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      />
-                    </div>
-                    <div className="col-span-2 text-right">
-                      <span className="text-sm font-semibold text-gray-800">
-                        {currency} {fmt(item.quantity * item.unit_price)}
-                      </span>
-                    </div>
-                    <div className="col-span-1 flex justify-end">
-                      <button onClick={() => removeItem(item.service_id)}
-                              className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </>
             )}
           </div>
@@ -418,27 +446,78 @@ export default function QuoteBuilder() {
                 />
               </div>
 
+              {/* Totals */}
               <div className="border-t pt-4 space-y-1.5">
-                <div className="flex justify-between text-sm text-gray-500">
-                  <span>Subtotal</span>
-                  <span>{currency} {fmt(subtotal)}</span>
-                </div>
-                {discount > 0 && (
-                  <div className="flex justify-between text-sm text-emerald-600">
-                    <span>Descuento ({discount}%)</span>
-                    <span>− {currency} {fmt(discountAmt)}</span>
-                  </div>
+                {hasMixed ? (
+                  <>
+                    {/* Pago inicial section */}
+                    {unicoItems.length > 0 && (
+                      <>
+                        <div className="flex justify-between text-sm text-gray-500">
+                          <span>Subtotal pago inicial</span>
+                          <span>{currency} {fmt(subtotalUnico)}</span>
+                        </div>
+                        {discount > 0 && (
+                          <div className="flex justify-between text-sm text-emerald-600">
+                            <span>Descuento ({discount}%)</span>
+                            <span>− {currency} {fmt(discountAmt)}</span>
+                          </div>
+                        )}
+                        {tax > 0 && (
+                          <div className="flex justify-between text-sm text-gray-500">
+                            <span>IVA ({tax}%)</span>
+                            <span>{currency} {fmt(taxAmt)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-base font-bold text-blue-700 border-t pt-2 mt-1">
+                          <span>TOTAL PAGO INICIAL</span>
+                          <span>{currency} {fmt(totalInicial)}</span>
+                        </div>
+                      </>
+                    )}
+                    {/* Recurring section */}
+                    {(mensualItems.length > 0 || anualItems.length > 0) && (
+                      <div className="mt-3 pt-3 border-t space-y-1.5">
+                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Costos recurrentes</p>
+                        {mensualItems.length > 0 && (
+                          <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                            <span>Cobro mensual</span>
+                            <span>{currency} {fmt(subtotalMensual)} / mes</span>
+                          </div>
+                        )}
+                        {anualItems.length > 0 && (
+                          <div className="flex justify-between text-sm font-semibold text-amber-700">
+                            <span>Cobro anual</span>
+                            <span>{currency} {fmt(subtotalAnual)} / año</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Subtotal</span>
+                      <span>{currency} {fmt(subtotalUnico)}</span>
+                    </div>
+                    {discount > 0 && (
+                      <div className="flex justify-between text-sm text-emerald-600">
+                        <span>Descuento ({discount}%)</span>
+                        <span>− {currency} {fmt(discountAmt)}</span>
+                      </div>
+                    )}
+                    {tax > 0 && (
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>IVA ({tax}%)</span>
+                        <span>{currency} {fmt(taxAmt)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-1">
+                      <span>TOTAL</span>
+                      <span>{currency} {fmt(totalInicial)}</span>
+                    </div>
+                  </>
                 )}
-                {tax > 0 && (
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>IVA ({tax}%)</span>
-                    <span>{currency} {fmt(taxAmt)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-lg font-bold text-gray-900 border-t pt-2 mt-1">
-                  <span>TOTAL</span>
-                  <span>{currency} {fmt(total)}</span>
-                </div>
               </div>
 
               <button

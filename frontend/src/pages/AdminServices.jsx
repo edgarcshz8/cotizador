@@ -4,8 +4,13 @@ import { Plus, Edit2, Check, X } from 'lucide-react';
 
 const CATEGORIES = ['NFC', 'Wallet', 'Web', 'Software', 'Otro'];
 const UNITS = ['unidad', 'hora', 'proyecto', 'tarjeta', 'mes', 'año', 'licencia'];
+const BILLING_TYPES = [
+  { value: 'unico',   label: 'Pago Único',  hint: 'Setup, desarrollo, implementación' },
+  { value: 'mensual', label: 'Mensual',      hint: 'Cobro recurrente mensual' },
+  { value: 'anual',   label: 'Anual',        hint: 'Cobro recurrente anual' },
+];
 
-const EMPTY = { name: '', description: '', unit_price: '', unit_label: 'proyecto', category: 'Web', active: true };
+const EMPTY = { name: '', description: '', unit_price: '', unit_label: 'proyecto', category: 'Web', billing_type: 'unico', active: true };
 
 export default function AdminServices() {
   const [services, setServices] = useState([]);
@@ -111,6 +116,34 @@ export default function AdminServices() {
             {field('unit_price',  'Precio *',    { type: 'number', ph: '0' })}
             {field('unit_label',  'Unidad',      { select: true, options: UNITS })}
             {field('category',    'Categoría',   { select: true, options: CATEGORIES })}
+            <div className="col-span-2">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de cobro *</label>
+              <div className="flex gap-2">
+                {BILLING_TYPES.map(bt => (
+                  <button
+                    key={bt.value}
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, billing_type: bt.value }))}
+                    className={`flex-1 border rounded-lg px-3 py-2 text-left transition-colors ${
+                      form.billing_type === bt.value
+                        ? bt.value === 'unico'   ? 'border-blue-500 bg-blue-50'
+                        : bt.value === 'mensual' ? 'border-emerald-500 bg-emerald-50'
+                        :                         'border-amber-500 bg-amber-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <p className={`text-xs font-semibold ${
+                      form.billing_type === bt.value
+                        ? bt.value === 'unico'   ? 'text-blue-700'
+                        : bt.value === 'mensual' ? 'text-emerald-700'
+                        :                         'text-amber-700'
+                        : 'text-gray-600'
+                    }`}>{bt.label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{bt.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           <div className="flex gap-2 mt-4">
             <button onClick={save}
@@ -130,7 +163,7 @@ export default function AdminServices() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
-              {['Servicio', 'Categoría', 'Precio', 'Estado', ''].map(h => (
+              {['Servicio', 'Categoría', 'Tipo cobro', 'Precio', 'Estado', ''].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-400">{h}</th>
               ))}
             </tr>
@@ -148,6 +181,22 @@ export default function AdminServices() {
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${catColor[s.category] || catColor['Otro']}`}>
                     {s.category}
                   </span>
+                </td>
+                <td className="px-5 py-3">
+                  {(() => {
+                    const bt = s.billing_type || 'unico';
+                    const billingStyle = {
+                      unico:   'bg-blue-100 text-blue-700',
+                      mensual: 'bg-emerald-100 text-emerald-700',
+                      anual:   'bg-amber-100 text-amber-700',
+                    };
+                    const billingLabel = { unico: 'Pago Único', mensual: 'Mensual', anual: 'Anual' };
+                    return (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${billingStyle[bt] || billingStyle.unico}`}>
+                        {billingLabel[bt] || 'Pago Único'}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="px-5 py-3 text-sm font-medium text-gray-700">
                   {fmt(s.unit_price)} <span className="text-gray-400 font-normal text-xs">/ {s.unit_label}</span>
@@ -173,7 +222,7 @@ export default function AdminServices() {
               </tr>
             ))}
             {services.length === 0 && (
-              <tr><td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-sm">
+              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-sm">
                 Sin servicios registrados
               </td></tr>
             )}
