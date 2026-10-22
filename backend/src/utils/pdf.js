@@ -1,7 +1,13 @@
 import PDFDocument from 'pdfkit';
 
 function fmtCurrency(amount, currency = 'CLP') {
-  return `${currency} ${new Intl.NumberFormat('es-CL').format(Math.round(parseFloat(amount) || 0))}`;
+  const prefix = currency === 'CLP' ? '$' : currency;
+  return `${prefix} ${new Intl.NumberFormat('es-CL').format(Math.round(parseFloat(amount) || 0))}`;
+}
+
+// Elimina ceros decimales innecesarios: 19.00 → "19", 7.50 → "7.5"
+function fmtPercent(val) {
+  return parseFloat(val).toString();
 }
 
 // "Único" = se paga una sola vez | "Mensual/Anual" = cobros recurrentes
@@ -145,24 +151,25 @@ export function generatePDF(data) {
     }
 
     subGroups.forEach(sg => {
-      // Sub-encabezado por nombre de servicio
+      // Sub-encabezado por nombre de servicio (sin sangrado — va pegado a la izquierda)
       if (sg.name) {
         doc.rect(M, y, CW, 16).fill('#f1f5f9');
-        doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7)
-           .text(sg.name, M + 12, y + 5, { width: CW - 24 });
+        doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7.5)
+           .text(sg.name, M + 5, y + 5, { width: CW - 10 });
         y += 16;
       }
 
+      const indent = sg.name ? 18 : 5; // sub-ítems sangrados si hay grupo padre
       sg.items.forEach(item => {
         // Descripción como subtítulo solo para ítems legacy sin service_group
         const subtitle = !sg.name && item.description?.trim() ? item.description.trim() : null;
         const rh = subtitle ? 36 : 22;
         doc.rect(M, y, CW, rh).fill(rowIndex % 2 === 0 ? WHITE : LIGHT);
         doc.fillColor(DARK).font('Helvetica-Bold').fontSize(8.5)
-           .text(item.service_name, cols.desc + 5, y + 6, { width: descW - 10 });
+           .text(item.service_name, cols.desc + indent, y + 6, { width: descW - indent - 5 });
         if (subtitle) {
           doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
-             .text(subtitle, cols.desc + 5, y + 19, { width: descW - 10 });
+             .text(subtitle, cols.desc + indent, y + 19, { width: descW - indent - 5 });
         }
         doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
            .text(String(item.quantity),                   cols.qty,   y + 6, { width: 40, align: 'center' })
@@ -214,10 +221,10 @@ export function generatePDF(data) {
     if (unicoGroup) {
       addRow('Subtotal pago único:', fmtCurrency(subtotal, currency));
       if (parseFloat(discount_percent) > 0) {
-        addRow(`Descuento (${discount_percent}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
+        addRow(`Descuento (${fmtPercent(discount_percent)}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
       }
       if (parseFloat(tax_percent) > 0) {
-        addRow(`IVA (${tax_percent}%):`, fmtCurrency(tax_amount, currency));
+        addRow(`IVA (${fmtPercent(tax_percent)}%):`, fmtCurrency(tax_amount, currency));
       }
       doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
       y += 6;
