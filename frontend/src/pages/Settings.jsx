@@ -4,7 +4,7 @@ import { Save, CheckCircle } from 'lucide-react';
 
 export default function Settings() {
   const [form, setForm] = useState({
-    name: '', rut: '', email: '', phone: '', address: '',
+    name: '', rut: '', email: '', phone: '', address: '', city: '',
     website: '', currency: 'CLP', tax_percent: 0,
     quote_valid_days: 30, footer_text: '',
   });
@@ -49,7 +49,8 @@ export default function Settings() {
               { key: 'rut',     label: 'RUT',        ph: '12.345.678-9',            full: false },
               { key: 'email',   label: 'Email',      ph: 'contacto@empresa.cl',     full: false, type: 'email' },
               { key: 'phone',   label: 'Teléfono',   ph: '+56 9 1234 5678',         full: false },
-              { key: 'address', label: 'Dirección',  ph: 'Av. Principal 123, Santiago', full: true },
+              { key: 'address', label: 'Dirección',  ph: 'Av. Principal 123',       full: false },
+              { key: 'city',    label: 'Ciudad',     ph: 'Santiago',                full: false },
               { key: 'website', label: 'Sitio Web',  ph: 'www.miempresa.cl',        full: false },
             ].map(({ key, label, ph, full, type = 'text' }) => (
               <div key={key} className={full ? 'col-span-2' : ''}>

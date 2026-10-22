@@ -47,9 +47,10 @@ export function generatePDF(data) {
     doc.font('Helvetica').fontSize(8).fillColor('#bfdbfe')
        .text(companyMeta, M, 56, { width: CW * 0.55 });
   }
-  if (company.address) {
+  const companyLocation = [company.address, company.city].filter(Boolean).join(', ');
+  if (companyLocation) {
     doc.font('Helvetica').fontSize(8).fillColor('#bfdbfe')
-       .text(company.address, M, 68, { width: CW * 0.55 });
+       .text(companyLocation, M, 68, { width: CW * 0.55 });
   }
 
   const dateStr   = new Date(created_at).toLocaleDateString('es-CL');

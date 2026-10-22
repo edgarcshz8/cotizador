@@ -131,4 +131,8 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quote_items' AND column_name='taxable') THEN
     ALTER TABLE quote_items ADD COLUMN taxable BOOLEAN DEFAULT true;
   END IF;
+  -- company_settings: add city
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='company_settings' AND column_name='city') THEN
+    ALTER TABLE company_settings ADD COLUMN city VARCHAR(100);
+  END IF;
 END $$;
