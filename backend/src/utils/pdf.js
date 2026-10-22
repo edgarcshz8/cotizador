@@ -308,21 +308,17 @@ export function generatePDF(data) {
     y += 62;
   }
 
-  // ── Footer ────────────────────────────────────────────────────────────────────
-  // Eliminar margen inferior para que doc.text() no fuerce nueva página al dibujar el footer
-  doc.page.margins.bottom = 0;
-  const footerY = doc.page.height - 42;
-  // Si el contenido se solapa con el footer, agregar página nueva
-  if (y > footerY - 10) {
-    doc.addPage();
-    doc.page.margins.bottom = 0;
+  // ── Pie de página (texto normal dentro del documento) ────────────────────────
+  const footerText = company.footer_text || 'Gracias por su preferencia. Esta cotización es válida por el período indicado.';
+  if (footerText.trim()) {
+    ensureSpace(30);
+    doc.moveTo(M, y).lineTo(M + CW, y).strokeColor('#e5e7eb').lineWidth(0.5).stroke();
+    y += 10;
+    ensureSpace(20);
+    doc.fillColor(GRAY).font('Helvetica').fontSize(8)
+       .text(footerText.trim(), M, y, { width: CW, align: 'center' });
+    y += 20;
   }
-  doc.rect(0, footerY, PW, 42).fill('#1e3a5f');
-  doc.fillColor('#93c5fd').font('Helvetica').fontSize(8).text(
-    company.footer_text || 'Gracias por su preferencia. Esta cotización es válida por el período indicado.',
-    M, footerY + 15,
-    { width: CW, align: 'center' }
-  );
 
   doc.end();
   return doc;
