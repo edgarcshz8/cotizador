@@ -240,10 +240,11 @@ export function generatePDF(data) {
       if (parseFloat(tax_percent) > 0 && parseFloat(tax_amount) > 0) {
         addRow(`IVA (${fmtPercent(tax_percent)}%):`, fmtCurrency(tax_amount, currency));
       }
-      doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
-      y += 6;
-      addRow('TOTAL PAGO ÚNICO:', fmtCurrency(total, currency), true);
-      y += 8;
+      ensureSpace(20);
+      doc.fillColor(DARK).font('Helvetica-Bold').fontSize(10);
+      doc.text('Total pago único:', tx, y, { width: tw * 0.5 });
+      doc.text(fmtCurrency(total, currency), tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+      y += 16;
     }
 
     if (mensualGroup) {
