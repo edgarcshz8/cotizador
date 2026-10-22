@@ -127,14 +127,17 @@ export function generatePDF(data) {
     }
 
     group.rows.forEach(item => {
-      const hasDesc = item.description && item.description.trim();
-      const rh = hasDesc ? 36 : 22;
+      // subtitle: service_group (parent service name) takes priority over description
+      const subtitle = (item.service_group && item.service_group.trim())
+        ? item.service_group.trim()
+        : (item.description && item.description.trim() ? item.description.trim() : null);
+      const rh = subtitle ? 36 : 22;
       doc.rect(M, y, CW, rh).fill(rowIndex % 2 === 0 ? WHITE : LIGHT);
       doc.fillColor(DARK).font('Helvetica-Bold').fontSize(8.5)
          .text(item.service_name, cols.desc + 5, y + 6, { width: descW - 10 });
-      if (hasDesc) {
+      if (subtitle) {
         doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
-           .text(item.description, cols.desc + 5, y + 19, { width: descW - 10 });
+           .text(subtitle, cols.desc + 5, y + 19, { width: descW - 10 });
       }
       doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
          .text(String(item.quantity),                       cols.qty,   y + 6, { width: 40, align: 'center' })

@@ -99,12 +99,27 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_city') THEN
     ALTER TABLE quotes ADD COLUMN client_city VARCHAR(100);
   END IF;
-  -- services: add billing_type
+  -- services: add billing_type (legacy, for services without components)
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='services' AND column_name='billing_type') THEN
     ALTER TABLE services ADD COLUMN billing_type VARCHAR(20) DEFAULT 'unico';
   END IF;
   -- quote_items: add billing_type
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quote_items' AND column_name='billing_type') THEN
     ALTER TABLE quote_items ADD COLUMN billing_type VARCHAR(20) DEFAULT 'unico';
+  END IF;
+  -- quote_items: add service_group (parent service name when item is a component)
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quote_items' AND column_name='service_group') THEN
+    ALTER TABLE quote_items ADD COLUMN service_group VARCHAR(255);
+  END IF;
+  -- service_components table
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='service_components') THEN
+    CREATE TABLE service_components (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      service_id UUID REFERENCES services(id) ON DELETE CASCADE,
+      name VARCHAR(255) NOT NULL,
+      unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+      billing_type VARCHAR(20) DEFAULT 'unico',
+      sort_order INTEGER DEFAULT 0
+    );
   END IF;
 END $$;

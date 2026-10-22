@@ -5,7 +5,7 @@ import {
   ChevronRight, X, Package, UserCheck,
 } from 'lucide-react';
 
-const BILLING_LABEL = { unico: 'Pago Único', mensual: 'Mensual', anual: 'Anual' };
+const BILLING_LABEL = { unico: 'Único', mensual: '/mes', anual: '/año' };
 const BILLING_STYLE = {
   unico:   'bg-blue-100 text-blue-700',
   mensual: 'bg-emerald-100 text-emerald-700',
@@ -13,24 +13,24 @@ const BILLING_STYLE = {
 };
 
 export default function QuoteBuilder() {
-  const [services, setServices] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [client, setClient] = useState({ company: '', contact: '', email: '', phone: '', city: '' });
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [notes, setNotes] = useState('');
-  const [currency, setCurrency] = useState('CLP');
-  const [validDays, setValidDays] = useState(30);
-  const [search, setSearch] = useState('');
-  const [openCats, setOpenCats] = useState({});
-  const [loading, setLoading]         = useState(false);
-  const [success, setSuccess]         = useState(null);
-  const [rutSearch, setRutSearch]     = useState('');
-  const [suggestions, setSuggestions] = useState([]);
-  const [showDrop, setShowDrop]       = useState(false);
-  const [clientFound, setClientFound] = useState(false);
-  const rutRef                        = useRef(null);
-  const skipSearch                    = useRef(false);
+  const [services, setServices]         = useState([]);
+  const [cart, setCart]                 = useState([]);  // flat list of component items
+  const [client, setClient]             = useState({ company: '', contact: '', email: '', phone: '', city: '' });
+  const [discount, setDiscount]         = useState(0);
+  const [tax, setTax]                   = useState(0);
+  const [notes, setNotes]               = useState('');
+  const [currency, setCurrency]         = useState('CLP');
+  const [validDays, setValidDays]       = useState(30);
+  const [search, setSearch]             = useState('');
+  const [openCats, setOpenCats]         = useState({});
+  const [loading, setLoading]           = useState(false);
+  const [success, setSuccess]           = useState(null);
+  const [rutSearch, setRutSearch]       = useState('');
+  const [suggestions, setSuggestions]   = useState([]);
+  const [showDrop, setShowDrop]         = useState(false);
+  const [clientFound, setClientFound]   = useState(false);
+  const rutRef                          = useRef(null);
+  const skipSearch                      = useRef(false);
 
   useEffect(() => {
     axios.get('/api/services').then(({ data }) => {
@@ -40,8 +40,8 @@ export default function QuoteBuilder() {
       setOpenCats(cats);
     });
     axios.get('/api/settings').then(({ data }) => {
-      if (data.currency) setCurrency(data.currency);
-      if (data.tax_percent) setTax(parseFloat(data.tax_percent));
+      if (data.currency)        setCurrency(data.currency);
+      if (data.tax_percent)     setTax(parseFloat(data.tax_percent));
       if (data.quote_valid_days) setValidDays(data.quote_valid_days);
     });
   }, []);
@@ -55,42 +55,58 @@ export default function QuoteBuilder() {
       return acc;
     }, {});
 
+  // ── Cart helpers ─────────────────────────────────────────────────────────────
+
   const addToCart = (service) => {
-    setCart(prev => {
-      const existing = prev.find(i => i.service_id === service.id);
-      if (existing) {
-        return prev.map(i =>
-          i.service_id === service.id ? { ...i, quantity: i.quantity + 1 } : i
-        );
-      }
-      return [...prev, {
-        service_id: service.id,
-        service_name: service.name,
-        description: service.description,
-        unit_price: parseFloat(service.unit_price),
-        quantity: 1,
-        unit_label: service.unit_label,
-        billing_type: service.billing_type || 'unico',
-      }];
-    });
+    const comps = Array.isArray(service.components) ? service.components : [];
+
+    if (comps.length > 0) {
+      // Replace existing components of this service with fresh copies
+      setCart(prev => {
+        const without = prev.filter(i => i.service_id !== service.id);
+        const newItems = comps.map(comp => ({
+          cart_key:     `${service.id}_${comp.id}`,
+          service_id:   service.id,
+          service_name: service.name,   // parent (for grouping + PDF)
+          service_name_display: comp.name,  // what shows on the line
+          billing_type: comp.billing_type || 'unico',
+          unit_price:   parseFloat(comp.unit_price) || 0,
+          quantity:     1,
+        }));
+        return [...without, ...newItems];
+      });
+    } else {
+      // Legacy single-price service
+      setCart(prev => {
+        const existing = prev.find(i => i.cart_key === service.id);
+        if (existing) {
+          return prev.map(i =>
+            i.cart_key === service.id ? { ...i, quantity: i.quantity + 1 } : i
+          );
+        }
+        return [...prev, {
+          cart_key:     service.id,
+          service_id:   service.id,
+          service_name: service.name,
+          service_name_display: service.name,
+          billing_type: service.billing_type || 'unico',
+          unit_price:   parseFloat(service.unit_price) || 0,
+          quantity:     1,
+        }];
+      });
+    }
   };
 
-  const updateQty = (id, delta) => {
-    setCart(prev =>
-      prev
-        .map(i => i.service_id === id ? { ...i, quantity: i.quantity + delta } : i)
-        .filter(i => i.quantity > 0)
-    );
-  };
+  const removeService  = (serviceId) => setCart(prev => prev.filter(i => i.service_id !== serviceId));
+  const removeItem     = (cartKey)   => setCart(prev => prev.filter(i => i.cart_key !== cartKey));
+  const updateQty      = (cartKey, delta) => setCart(prev =>
+    prev.map(i => i.cart_key === cartKey ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i)
+  );
+  const updatePrice    = (cartKey, val) => setCart(prev =>
+    prev.map(i => i.cart_key === cartKey ? { ...i, unit_price: parseFloat(val) || 0 } : i)
+  );
 
-  const updatePrice = (id, val) => {
-    setCart(prev =>
-      prev.map(i => i.service_id === id ? { ...i, unit_price: parseFloat(val) || 0 } : i)
-    );
-  };
-
-  const removeItem = (id) => setCart(prev => prev.filter(i => i.service_id !== id));
-
+  // ── Debounce client search ───────────────────────────────────────────────────
   useEffect(() => {
     if (skipSearch.current) { skipSearch.current = false; return; }
     if (rutSearch.trim().length < 2) { setSuggestions([]); setShowDrop(false); return; }
@@ -99,9 +115,7 @@ export default function QuoteBuilder() {
         const { data } = await axios.get(`/api/clients/search?q=${encodeURIComponent(rutSearch.trim())}`);
         setSuggestions(data);
         setShowDrop(data.length > 0);
-      } catch {
-        setSuggestions([]); setShowDrop(false);
-      }
+      } catch { setSuggestions([]); setShowDrop(false); }
     }, 250);
     return () => clearTimeout(timer);
   }, [rutSearch]);
@@ -121,7 +135,7 @@ export default function QuoteBuilder() {
     setClientFound(true);
   };
 
-  // Totals grouped by billing_type
+  // ── Totals ───────────────────────────────────────────────────────────────────
   const unicoItems   = cart.filter(i => !i.billing_type || i.billing_type === 'unico');
   const mensualItems = cart.filter(i => i.billing_type === 'mensual');
   const anualItems   = cart.filter(i => i.billing_type === 'anual');
@@ -130,15 +144,23 @@ export default function QuoteBuilder() {
   const subtotalMensual = mensualItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
   const subtotalAnual   = anualItems.reduce((s, i) => s + i.quantity * i.unit_price, 0);
 
-  const discountAmt   = subtotalUnico * (discount / 100);
-  const afterDiscount = subtotalUnico - discountAmt;
-  const taxAmt        = afterDiscount * (tax / 100);
-  const totalInicial  = afterDiscount + taxAmt;
-
-  const hasMixed = mensualItems.length > 0 || anualItems.length > 0;
+  const discountAmt  = subtotalUnico * (discount / 100);
+  const afterDisc    = subtotalUnico - discountAmt;
+  const taxAmt       = afterDisc * (tax / 100);
+  const totalInicial = afterDisc + taxAmt;
+  const hasMixed     = mensualItems.length > 0 || anualItems.length > 0;
 
   const fmt = (n) => new Intl.NumberFormat('es-CL').format(Math.round(n));
 
+  // Group cart items by service for display
+  const cartByService = cart.reduce((acc, item) => {
+    const key = item.service_id;
+    if (!acc[key]) acc[key] = { service_name: item.service_name, items: [] };
+    acc[key].items.push(item);
+    return acc;
+  }, {});
+
+  // ── Submit ───────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!client.company.trim()) { alert('Ingresa el nombre de la empresa.'); return; }
     if (cart.length === 0) { alert('Agrega al menos un servicio.'); return; }
@@ -147,10 +169,17 @@ export default function QuoteBuilder() {
       const { data } = await axios.post('/api/quotes', {
         client_company: client.company,
         client_contact: client.contact,
-        client_email: client.email,
-        client_phone: client.phone,
-        client_city: client.city,
-        items: cart,
+        client_email:   client.email,
+        client_phone:   client.phone,
+        client_city:    client.city,
+        items: cart.map(i => ({
+          service_id:   i.service_id,
+          service_name: i.service_name_display,  // component name on the line
+          service_group: i.service_name !== i.service_name_display ? i.service_name : null,
+          unit_price:   i.unit_price,
+          billing_type: i.billing_type,
+          quantity:     i.quantity,
+        })),
         discount_percent: discount,
         tax_percent: tax,
         notes,
@@ -165,6 +194,8 @@ export default function QuoteBuilder() {
       setCart([]);
       setClient({ company: '', contact: '', email: '', phone: '', city: '' });
       setNotes('');
+      setRutSearch('');
+      setClientFound(false);
     } catch {
       alert('Error al generar la cotización.');
     } finally {
@@ -175,7 +206,7 @@ export default function QuoteBuilder() {
   return (
     <div className="flex h-full">
       {/* ── Catalog panel ──────────────────────────────────────── */}
-      <div className="w-72 bg-white border-r flex flex-col flex-shrink-0 overflow-hidden">
+      <div className="w-80 bg-white border-r flex flex-col flex-shrink-0 overflow-hidden">
         <div className="p-4 border-b">
           <p className="text-sm font-semibold text-gray-700 mb-2">Catálogo de Servicios</p>
           <div className="relative">
@@ -202,26 +233,41 @@ export default function QuoteBuilder() {
               </button>
 
               {openCats[cat] && items.map(s => {
-                const inCart = cart.find(i => i.service_id === s.id);
-                const bt = s.billing_type || 'unico';
+                const comps = Array.isArray(s.components) ? s.components : [];
+                const inCart = cart.some(i => i.service_id === s.id);
                 return (
                   <div key={s.id} className="px-3 py-2.5 border-t hover:bg-orange-50 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <p className="text-xs font-semibold text-gray-800 leading-tight">{s.name}</p>
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${BILLING_STYLE[bt]}`}>
-                            {BILLING_LABEL[bt]}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-tight">{s.description}</p>
-                        <p className="text-xs font-bold text-orange-600 mt-1">
-                          {currency} {fmt(s.unit_price)}<span className="font-normal text-gray-500"> / {s.unit_label}</span>
-                        </p>
+                        <p className="text-xs font-semibold text-gray-800 leading-tight">{s.name}</p>
+                        {s.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1 leading-tight">{s.description}</p>
+                        )}
+
+                        {comps.length > 0 ? (
+                          <div className="mt-1.5 space-y-0.5">
+                            {comps.map(c => (
+                              <div key={c.id} className="flex items-center justify-between text-xs">
+                                <span className="text-gray-500 truncate mr-1">{c.name}</span>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <span className="font-semibold text-gray-700">{currency} {fmt(c.unit_price)}</span>
+                                  <span className={`px-1 py-0.5 rounded text-[10px] font-medium ${BILLING_STYLE[c.billing_type] || BILLING_STYLE.unico}`}>
+                                    {BILLING_LABEL[c.billing_type] || 'Único'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs font-bold text-orange-600 mt-1">
+                            {currency} {fmt(s.unit_price)}
+                            <span className="font-normal text-gray-500"> / {s.unit_label}</span>
+                          </p>
+                        )}
                       </div>
                       <button
                         onClick={() => addToCart(s)}
-                        className={`flex-shrink-0 p-1 rounded-full transition-colors ${
+                        className={`flex-shrink-0 p-1 rounded-full transition-colors mt-0.5 ${
                           inCart
                             ? 'bg-orange-600 text-white'
                             : 'bg-gray-100 hover:bg-orange-600 hover:text-white text-gray-600'
@@ -232,7 +278,7 @@ export default function QuoteBuilder() {
                     </div>
                     {inCart && (
                       <p className="text-xs text-orange-600 font-medium mt-1">
-                        En cotización: {inCart.quantity}×
+                        En cotización
                       </p>
                     )}
                   </div>
@@ -278,7 +324,6 @@ export default function QuoteBuilder() {
           {/* Client */}
           <div className="bg-white rounded-xl border p-5">
             <p className="text-sm font-semibold text-gray-700 mb-4">Datos del Cliente</p>
-
             <div className="relative mb-4" ref={rutRef}>
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
               <input
@@ -293,11 +338,8 @@ export default function QuoteBuilder() {
               {showDrop && (
                 <div className="absolute z-20 top-full mt-1 w-full bg-white border rounded-xl shadow-lg overflow-hidden">
                   {suggestions.map(c => (
-                    <button
-                      key={c.id}
-                      onMouseDown={() => selectClient(c)}
-                      className="w-full text-left px-4 py-2.5 hover:bg-orange-50 border-b last:border-0 transition-colors"
-                    >
+                    <button key={c.id} onMouseDown={() => selectClient(c)}
+                            className="w-full text-left px-4 py-2.5 hover:bg-orange-50 border-b last:border-0 transition-colors">
                       <span className="font-mono text-xs font-semibold text-orange-600">{c.rut}</span>
                       <span className="text-sm font-medium text-gray-800 ml-2">{c.company}</span>
                       {c.contact && <span className="text-xs text-gray-400 ml-1">· {c.contact}</span>}
@@ -306,26 +348,23 @@ export default function QuoteBuilder() {
                 </div>
               )}
             </div>
-
             {clientFound && (
               <div className="flex items-center gap-2 text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 mb-4 text-sm">
                 <UserCheck size={15} /> Cliente cargado — puedes editar los datos si es necesario
               </div>
             )}
-
             <div className="grid grid-cols-2 gap-3">
               {[
                 { key: 'company', label: 'Nombre Empresa *', ph: 'Empresa SpA' },
                 { key: 'contact', label: 'Contacto',         ph: 'Juan Pérez' },
                 { key: 'email',   label: 'Correo Empresa',   ph: 'contacto@empresa.cl', type: 'email' },
                 { key: 'phone',   label: 'Teléfono',         ph: '+56 9 1234 5678' },
-                { key: 'city',    label: 'Ciudad Empresa',   ph: 'Santiago' },
+                { key: 'city',    label: 'Ciudad',            ph: 'Santiago' },
               ].map(({ key, label, ph, type = 'text' }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
                   <input
-                    type={type}
-                    value={client[key]}
+                    type={type} value={client[key]}
                     onChange={e => setClient(p => ({ ...p, [key]: e.target.value }))}
                     placeholder={ph}
                     className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
@@ -335,11 +374,11 @@ export default function QuoteBuilder() {
             </div>
           </div>
 
-          {/* Items */}
+          {/* Items — grouped by service */}
           <div className="bg-white rounded-xl border">
             <div className="px-5 py-3.5 border-b">
               <p className="text-sm font-semibold text-gray-700">
-                Servicios {cart.length > 0 && <span className="text-orange-600">({cart.length})</span>}
+                Servicios {cart.length > 0 && <span className="text-orange-600">({Object.keys(cartByService).length})</span>}
               </p>
             </div>
 
@@ -349,62 +388,78 @@ export default function QuoteBuilder() {
                 <p className="text-sm">Agrega servicios desde el catálogo</p>
               </div>
             ) : (
-              <>
-                <div className="grid grid-cols-12 px-5 py-2 text-xs font-medium text-gray-400 bg-gray-50 border-b">
-                  <span className="col-span-4">Servicio</span>
-                  <span className="col-span-2 text-center">Cant.</span>
-                  <span className="col-span-3 text-right">Precio unitario</span>
-                  <span className="col-span-2 text-right">Subtotal</span>
-                  <span className="col-span-1" />
-                </div>
-                {cart.map(item => {
-                  const bt = item.billing_type || 'unico';
-                  return (
-                    <div key={item.service_id}
-                         className="grid grid-cols-12 items-center px-5 py-3 border-b last:border-0 hover:bg-gray-50">
-                      <div className="col-span-4">
-                        <p className="text-sm font-medium text-gray-800">{item.service_name}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <p className="text-xs text-gray-400">{item.unit_label}</p>
-                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${BILLING_STYLE[bt]}`}>
-                            {BILLING_LABEL[bt]}
+              Object.entries(cartByService).map(([serviceId, group]) => (
+                <div key={serviceId} className="border-b last:border-0">
+                  {/* Service group header */}
+                  <div className="flex items-center justify-between px-5 py-2 bg-gray-50 border-b">
+                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      {group.service_name}
+                    </p>
+                    <button
+                      onClick={() => removeService(serviceId)}
+                      className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+                    >
+                      <Trash2 size={12} /> Quitar servicio
+                    </button>
+                  </div>
+
+                  {/* Column headers (first group only) */}
+                  <div className="grid grid-cols-12 px-5 py-1.5 text-xs font-medium text-gray-400">
+                    <span className="col-span-4">Componente</span>
+                    <span className="col-span-2 text-center">Cant.</span>
+                    <span className="col-span-3 text-right">Precio</span>
+                    <span className="col-span-2 text-right">Subtotal</span>
+                    <span className="col-span-1" />
+                  </div>
+
+                  {group.items.map(item => {
+                    const bt = item.billing_type || 'unico';
+                    return (
+                      <div key={item.cart_key}
+                           className="grid grid-cols-12 items-center px-5 py-2.5 border-t hover:bg-gray-50">
+                        <div className="col-span-4">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-sm font-medium text-gray-800">{item.service_name_display}</p>
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${BILLING_STYLE[bt]}`}>
+                              {BILLING_LABEL[bt]}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-center gap-1">
+                          <button onClick={() => updateQty(item.cart_key, -1)}
+                                  className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                            <Minus size={11} />
+                          </button>
+                          <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
+                          <button onClick={() => updateQty(item.cart_key, 1)}
+                                  className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                            <Plus size={11} />
+                          </button>
+                        </div>
+                        <div className="col-span-3 flex justify-end">
+                          <input
+                            type="number"
+                            value={item.unit_price}
+                            onChange={e => updatePrice(item.cart_key, e.target.value)}
+                            className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div className="col-span-2 text-right">
+                          <span className="text-sm font-semibold text-gray-800">
+                            {currency} {fmt(item.quantity * item.unit_price)}
                           </span>
                         </div>
+                        <div className="col-span-1 flex justify-end">
+                          <button onClick={() => removeItem(item.cart_key)}
+                                  className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
+                            <X size={13} />
+                          </button>
+                        </div>
                       </div>
-                      <div className="col-span-2 flex items-center justify-center gap-1">
-                        <button onClick={() => updateQty(item.service_id, -1)}
-                                className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
-                          <Minus size={11} />
-                        </button>
-                        <span className="w-7 text-center text-sm font-semibold">{item.quantity}</span>
-                        <button onClick={() => updateQty(item.service_id, 1)}
-                                className="p-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
-                          <Plus size={11} />
-                        </button>
-                      </div>
-                      <div className="col-span-3 flex justify-end">
-                        <input
-                          type="number"
-                          value={item.unit_price}
-                          onChange={e => updatePrice(item.service_id, e.target.value)}
-                          className="w-28 text-right border rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
-                      <div className="col-span-2 text-right">
-                        <span className="text-sm font-semibold text-gray-800">
-                          {currency} {fmt(item.quantity * item.unit_price)}
-                        </span>
-                      </div>
-                      <div className="col-span-1 flex justify-end">
-                        <button onClick={() => removeItem(item.service_id)}
-                                className="p-1 rounded text-gray-300 hover:text-red-500 transition-colors">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </>
+                    );
+                  })}
+                </div>
+              ))
             )}
           </div>
 
@@ -437,10 +492,7 @@ export default function QuoteBuilder() {
 
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">Notas / Observaciones</label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={e => setNotes(e.target.value)}
+                <textarea rows={2} value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder="Condiciones de pago, plazos de entrega, aclaraciones..."
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
                 />
@@ -450,11 +502,10 @@ export default function QuoteBuilder() {
               <div className="border-t pt-4 space-y-1.5">
                 {hasMixed ? (
                   <>
-                    {/* Pago inicial section */}
                     {unicoItems.length > 0 && (
                       <>
                         <div className="flex justify-between text-sm text-gray-500">
-                          <span>Subtotal pago inicial</span>
+                          <span>Subtotal pago único</span>
                           <span>{currency} {fmt(subtotalUnico)}</span>
                         </div>
                         {discount > 0 && (
@@ -475,24 +526,20 @@ export default function QuoteBuilder() {
                         </div>
                       </>
                     )}
-                    {/* Recurring section */}
-                    {(mensualItems.length > 0 || anualItems.length > 0) && (
-                      <div className="mt-3 pt-3 border-t space-y-1.5">
-                        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Costos recurrentes</p>
-                        {mensualItems.length > 0 && (
-                          <div className="flex justify-between text-sm font-semibold text-emerald-700">
-                            <span>Cobro mensual</span>
-                            <span>{currency} {fmt(subtotalMensual)} / mes</span>
-                          </div>
-                        )}
-                        {anualItems.length > 0 && (
-                          <div className="flex justify-between text-sm font-semibold text-amber-700">
-                            <span>Cobro anual</span>
-                            <span>{currency} {fmt(subtotalAnual)} / año</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
+                    <div className="pt-2 space-y-1.5">
+                      {mensualItems.length > 0 && (
+                        <div className="flex justify-between text-sm font-semibold text-emerald-700">
+                          <span>Cobro mensual</span>
+                          <span>{currency} {fmt(subtotalMensual)} / mes</span>
+                        </div>
+                      )}
+                      {anualItems.length > 0 && (
+                        <div className="flex justify-between text-sm font-semibold text-amber-700">
+                          <span>Cobro anual</span>
+                          <span>{currency} {fmt(subtotalAnual)} / año</span>
+                        </div>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
