@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Plus, Edit2, Trash2, Check, X, Search } from 'lucide-react';
 
-const EMPTY = { rut: '', name: '', company: '', email: '', phone: '', address: '' };
+const EMPTY = { rut: '', company: '', contact: '', email: '', phone: '', address: '', city: '' };
 
 export default function AdminClients() {
   const [clients, setClients]   = useState([]);
@@ -45,9 +45,9 @@ export default function AdminClients() {
 
   const visible = clients.filter(c =>
     !search ||
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    (c.company || '').toLowerCase().includes(search.toLowerCase()) ||
     c.rut.toLowerCase().includes(search.toLowerCase()) ||
-    (c.company || '').toLowerCase().includes(search.toLowerCase())
+    (c.contact || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const field = (key, label, opts = {}) => (
@@ -87,12 +87,13 @@ export default function AdminClients() {
             {editing === 'new' ? 'Nuevo Cliente' : 'Editar Cliente'}
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {field('rut',     'RUT *',      { ph: '12.345.678-9' })}
-            {field('name',    'Nombre *',   { ph: 'Juan Pérez' })}
-            {field('company', 'Empresa',    { ph: 'Empresa SpA' })}
-            {field('email',   'Email',      { ph: 'juan@empresa.cl', type: 'email' })}
-            {field('phone',   'Teléfono',   { ph: '+56 9 1234 5678' })}
-            {field('address', 'Dirección',  { ph: 'Av. Principal 123, Santiago', full: true })}
+            {field('rut',     'RUT Empresa *',      { ph: '12.345.678-9' })}
+            {field('company', 'Nombre Empresa *',   { ph: 'Empresa SpA' })}
+            {field('contact', 'Contacto',           { ph: 'Juan Pérez' })}
+            {field('email',   'Correo Empresa',     { ph: 'contacto@empresa.cl', type: 'email' })}
+            {field('phone',   'Teléfono',           { ph: '+56 9 1234 5678' })}
+            {field('city',    'Ciudad Empresa',     { ph: 'Santiago' })}
+            {field('address', 'Dirección Empresa',  { ph: 'Av. Principal 123', full: true })}
           </div>
           {error && (
             <p className="mt-3 text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg px-3 py-2">
@@ -117,7 +118,7 @@ export default function AdminClients() {
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           type="text"
-          placeholder="Buscar por nombre, RUT o empresa..."
+          placeholder="Buscar por nombre empresa, RUT o contacto..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="w-full pl-8 pr-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white"
@@ -129,7 +130,7 @@ export default function AdminClients() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b">
             <tr>
-              {['RUT', 'Nombre', 'Empresa', 'Email', 'Teléfono', ''].map(h => (
+              {['RUT', 'Nombre Empresa', 'Contacto', 'Correo', 'Teléfono', 'Ciudad', ''].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs font-medium text-gray-400">{h}</th>
               ))}
             </tr>
@@ -138,10 +139,11 @@ export default function AdminClients() {
             {visible.map(c => (
               <tr key={c.id} className="hover:bg-gray-50">
                 <td className="px-5 py-3 font-mono text-xs font-semibold text-orange-600">{c.rut}</td>
-                <td className="px-5 py-3 font-medium text-gray-800">{c.name}</td>
-                <td className="px-5 py-3 text-gray-500 text-xs">{c.company || '—'}</td>
+                <td className="px-5 py-3 font-medium text-gray-800">{c.company}</td>
+                <td className="px-5 py-3 text-gray-500 text-xs">{c.contact || '—'}</td>
                 <td className="px-5 py-3 text-gray-500 text-xs">{c.email || '—'}</td>
                 <td className="px-5 py-3 text-gray-500 text-xs">{c.phone || '—'}</td>
+                <td className="px-5 py-3 text-gray-500 text-xs">{c.city || '—'}</td>
                 <td className="px-5 py-3">
                   <div className="flex items-center gap-1.5 justify-end">
                     <button onClick={() => startEdit(c)}
@@ -157,7 +159,7 @@ export default function AdminClients() {
               </tr>
             ))}
             {visible.length === 0 && (
-              <tr><td colSpan={6} className="px-5 py-10 text-center text-gray-400 text-sm">
+              <tr><td colSpan={7} className="px-5 py-10 text-center text-gray-400 text-sm">
                 {search ? 'Sin resultados para esa búsqueda' : 'Sin clientes registrados'}
               </td></tr>
             )}

@@ -87,8 +87,8 @@ export default function QuoteHistory() {
                     onClick={() => openDetail(q.id)}>
                   <td className="px-5 py-3 font-semibold text-orange-600 text-xs">{q.quote_number}</td>
                   <td className="px-5 py-3">
-                    <p className="font-medium text-gray-800">{q.client_name}</p>
-                    {q.client_company && <p className="text-xs text-gray-400">{q.client_company}</p>}
+                    <p className="font-medium text-gray-800">{q.client_company}</p>
+                    {q.client_contact && <p className="text-xs text-gray-400">{q.client_contact}</p>}
                   </td>
                   <td className="px-5 py-3 text-gray-500 text-xs">
                     {new Date(q.created_at).toLocaleDateString('es-CL')}
@@ -149,8 +149,8 @@ export default function QuoteHistory() {
           <div className="flex-1 overflow-y-auto p-5 space-y-4">
             <div className="bg-gray-50 rounded-xl p-4">
               <p className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">Cliente</p>
-              <p className="font-semibold text-gray-900">{detail.client_name}</p>
-              {[detail.client_company, detail.client_email, detail.client_phone].filter(Boolean).map((v, i) => (
+              <p className="font-semibold text-gray-900">{detail.client_company}</p>
+              {[detail.client_contact, detail.client_email, detail.client_phone, detail.client_city].filter(Boolean).map((v, i) => (
                 <p key={i} className="text-sm text-gray-500 mt-0.5">{v}</p>
               ))}
             </div>

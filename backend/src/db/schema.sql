@@ -12,10 +12,11 @@ CREATE TABLE IF NOT EXISTS services (
 CREATE TABLE IF NOT EXISTS quotes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   quote_number VARCHAR(30) UNIQUE NOT NULL,
-  client_name VARCHAR(255) NOT NULL,
+  client_company VARCHAR(255) NOT NULL,
+  client_contact VARCHAR(255),
   client_email VARCHAR(255),
-  client_company VARCHAR(255),
   client_phone VARCHAR(50),
+  client_city VARCHAR(100),
   subtotal DECIMAL(12,2) NOT NULL,
   discount_percent DECIMAL(5,2) DEFAULT 0,
   discount_amount DECIMAL(12,2) DEFAULT 0,
@@ -59,10 +60,43 @@ INSERT INTO company_settings (id) VALUES (1) ON CONFLICT DO NOTHING;
 CREATE TABLE IF NOT EXISTS clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   rut VARCHAR(20) UNIQUE NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  company VARCHAR(255),
+  company VARCHAR(255) NOT NULL,
+  contact VARCHAR(255),
   email VARCHAR(255),
   phone VARCHAR(50),
   address TEXT,
+  city VARCHAR(100),
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Migrations for existing databases
+DO $$
+BEGIN
+  -- clients: rename name -> contact
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clients' AND column_name='name')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clients' AND column_name='contact') THEN
+    ALTER TABLE clients RENAME COLUMN name TO contact;
+    ALTER TABLE clients ALTER COLUMN contact DROP NOT NULL;
+  END IF;
+  -- clients: make company NOT NULL (fill nulls first)
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clients' AND column_name='company') THEN
+    UPDATE clients SET company = contact WHERE company IS NULL AND contact IS NOT NULL;
+    UPDATE clients SET company = rut WHERE company IS NULL;
+  END IF;
+  -- clients: add city
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='clients' AND column_name='city') THEN
+    ALTER TABLE clients ADD COLUMN city VARCHAR(100);
+  END IF;
+  -- quotes: rename client_name -> client_contact
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_name')
+     AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_contact') THEN
+    ALTER TABLE quotes RENAME COLUMN client_name TO client_contact;
+    ALTER TABLE quotes ALTER COLUMN client_contact DROP NOT NULL;
+    -- fill client_company from client_contact where empty
+    UPDATE quotes SET client_company = client_contact WHERE client_company IS NULL AND client_contact IS NOT NULL;
+  END IF;
+  -- quotes: add client_city
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='quotes' AND column_name='client_city') THEN
+    ALTER TABLE quotes ADD COLUMN client_city VARCHAR(100);
+  END IF;
+END $$;

@@ -6,7 +6,7 @@ function fmtCurrency(amount, currency = 'CLP') {
 
 export function generatePDF(data) {
   const {
-    quote_number, client_name, client_company, client_email, client_phone,
+    quote_number, client_company, client_contact, client_email, client_phone, client_city,
     items = [], subtotal, discount_percent, discount_amount,
     tax_percent, tax_amount, total, notes, currency,
     valid_days, created_at, status, company = {},
@@ -55,16 +55,16 @@ export function generatePDF(data) {
   let y = 125;
 
   // ── Client block ─────────────────────────────────────────────────────────────
-  doc.rect(M, y, CW * 0.60, 72).fill(LIGHT);
+  doc.rect(M, y, CW * 0.60, 90).fill(LIGHT);
 
   doc.fillColor(PRIMARY).font('Helvetica-Bold').fontSize(7)
      .text('CLIENTE', M + 10, y + 9);
 
   doc.fillColor(DARK).font('Helvetica-Bold').fontSize(11)
-     .text(client_name, M + 10, y + 22, { width: CW * 0.55 });
+     .text(client_company, M + 10, y + 22, { width: CW * 0.55 });
 
   let cy = y + 38;
-  const clientMeta = [client_company, client_email, client_phone].filter(Boolean);
+  const clientMeta = [client_contact, client_email, client_phone, client_city].filter(Boolean);
   clientMeta.forEach(line => {
     doc.fillColor(GRAY).font('Helvetica').fontSize(8.5).text(line, M + 10, cy, { width: CW * 0.55 });
     cy += 13;
@@ -77,7 +77,7 @@ export function generatePDF(data) {
   doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(10)
      .text((status || 'pendiente').toUpperCase(), M + CW * 0.65, y + 28, { width: 110, align: 'center' });
 
-  y += 92;
+  y += 110;
 
   // ── Items table ───────────────────────────────────────────────────────────────
   const descW = CW - 165;

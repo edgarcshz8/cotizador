@@ -5,7 +5,7 @@ const router = Router();
 
 router.get('/', async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM clients ORDER BY name ASC');
+    const { rows } = await pool.query('SELECT * FROM clients ORDER BY company ASC');
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -18,8 +18,8 @@ router.get('/search', async (req, res) => {
   try {
     const { rows } = await pool.query(
       `SELECT * FROM clients
-       WHERE rut ILIKE $1 OR name ILIKE $1 OR company ILIKE $1
-       ORDER BY name ASC LIMIT 8`,
+       WHERE rut ILIKE $1 OR company ILIKE $1 OR contact ILIKE $1
+       ORDER BY company ASC LIMIT 8`,
       [`%${q}%`]
     );
     res.json(rows);
@@ -42,15 +42,15 @@ router.get('/rut/:rut', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { rut, name, company, email, phone, address } = req.body;
-  if (!rut?.trim() || !name?.trim()) {
-    return res.status(400).json({ error: 'RUT y nombre son obligatorios' });
+  const { rut, company, contact, email, phone, address, city } = req.body;
+  if (!rut?.trim() || !company?.trim()) {
+    return res.status(400).json({ error: 'RUT y nombre de empresa son obligatorios' });
   }
   try {
     const { rows } = await pool.query(
-      `INSERT INTO clients (rut, name, company, email, phone, address)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [rut.trim(), name.trim(), company || null, email || null, phone || null, address || null]
+      `INSERT INTO clients (rut, company, contact, email, phone, address, city)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [rut.trim(), company.trim(), contact || null, email || null, phone || null, address || null, city || null]
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -60,15 +60,15 @@ router.post('/', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-  const { rut, name, company, email, phone, address } = req.body;
-  if (!rut?.trim() || !name?.trim()) {
-    return res.status(400).json({ error: 'RUT y nombre son obligatorios' });
+  const { rut, company, contact, email, phone, address, city } = req.body;
+  if (!rut?.trim() || !company?.trim()) {
+    return res.status(400).json({ error: 'RUT y nombre de empresa son obligatorios' });
   }
   try {
     const { rows } = await pool.query(
-      `UPDATE clients SET rut=$1, name=$2, company=$3, email=$4, phone=$5, address=$6
-       WHERE id=$7 RETURNING *`,
-      [rut.trim(), name.trim(), company || null, email || null, phone || null, address || null, req.params.id]
+      `UPDATE clients SET rut=$1, company=$2, contact=$3, email=$4, phone=$5, address=$6, city=$7
+       WHERE id=$8 RETURNING *`,
+      [rut.trim(), company.trim(), contact || null, email || null, phone || null, address || null, city || null, req.params.id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'Cliente no encontrado' });
     res.json(rows[0]);

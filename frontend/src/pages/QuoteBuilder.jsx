@@ -8,7 +8,7 @@ import {
 export default function QuoteBuilder() {
   const [services, setServices] = useState([]);
   const [cart, setCart] = useState([]);
-  const [client, setClient] = useState({ name: '', email: '', company: '', phone: '' });
+  const [client, setClient] = useState({ company: '', contact: '', email: '', phone: '', city: '' });
   const [discount, setDiscount] = useState(0);
   const [tax, setTax] = useState(0);
   const [notes, setNotes] = useState('');
@@ -108,7 +108,7 @@ export default function QuoteBuilder() {
 
   const selectClient = (c) => {
     skipSearch.current = true;
-    setClient({ name: c.name || '', email: c.email || '', company: c.company || '', phone: c.phone || '' });
+    setClient({ company: c.company || '', contact: c.contact || '', email: c.email || '', phone: c.phone || '', city: c.city || '' });
     setRutSearch(c.rut);
     setShowDrop(false);
     setSuggestions([]);
@@ -124,15 +124,16 @@ export default function QuoteBuilder() {
   const fmt = (n) => new Intl.NumberFormat('es-CL').format(Math.round(n));
 
   const handleSubmit = async () => {
-    if (!client.name.trim()) { alert('Ingresa el nombre del cliente.'); return; }
+    if (!client.company.trim()) { alert('Ingresa el nombre de la empresa.'); return; }
     if (cart.length === 0) { alert('Agrega al menos un servicio.'); return; }
     setLoading(true);
     try {
       const { data } = await axios.post('/api/quotes', {
-        client_name: client.name,
-        client_email: client.email,
         client_company: client.company,
+        client_contact: client.contact,
+        client_email: client.email,
         client_phone: client.phone,
+        client_city: client.city,
         items: cart,
         discount_percent: discount,
         tax_percent: tax,
@@ -146,7 +147,7 @@ export default function QuoteBuilder() {
       window.open(url, '_blank');
       setTimeout(() => URL.revokeObjectURL(url), 5000);
       setCart([]);
-      setClient({ name: '', email: '', company: '', phone: '' });
+      setClient({ company: '', contact: '', email: '', phone: '', city: '' });
       setNotes('');
     } catch {
       alert('Error al generar la cotización.');
@@ -278,8 +279,8 @@ export default function QuoteBuilder() {
                       className="w-full text-left px-4 py-2.5 hover:bg-orange-50 border-b last:border-0 transition-colors"
                     >
                       <span className="font-mono text-xs font-semibold text-orange-600">{c.rut}</span>
-                      <span className="text-sm font-medium text-gray-800 ml-2">{c.name}</span>
-                      {c.company && <span className="text-xs text-gray-400 ml-1">· {c.company}</span>}
+                      <span className="text-sm font-medium text-gray-800 ml-2">{c.company}</span>
+                      {c.contact && <span className="text-xs text-gray-400 ml-1">· {c.contact}</span>}
                     </button>
                   ))}
                 </div>
@@ -294,10 +295,11 @@ export default function QuoteBuilder() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { key: 'name',    label: 'Nombre *',  ph: 'Juan Pérez' },
-                { key: 'company', label: 'Empresa',   ph: 'Empresa SpA' },
-                { key: 'email',   label: 'Email',     ph: 'juan@empresa.cl', type: 'email' },
-                { key: 'phone',   label: 'Teléfono',  ph: '+56 9 1234 5678' },
+                { key: 'company', label: 'Nombre Empresa *', ph: 'Empresa SpA' },
+                { key: 'contact', label: 'Contacto',         ph: 'Juan Pérez' },
+                { key: 'email',   label: 'Correo Empresa',   ph: 'contacto@empresa.cl', type: 'email' },
+                { key: 'phone',   label: 'Teléfono',         ph: '+56 9 1234 5678' },
+                { key: 'city',    label: 'Ciudad Empresa',   ph: 'Santiago' },
               ].map(({ key, label, ph, type = 'text' }) => (
                 <div key={key}>
                   <label className="block text-xs font-medium text-gray-500 mb-1">{label}</label>
@@ -441,7 +443,7 @@ export default function QuoteBuilder() {
 
               <button
                 onClick={handleSubmit}
-                disabled={loading || !client.name.trim()}
+                disabled={loading || !client.company.trim()}
                 className="w-full flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition-colors"
               >
                 <FileDown size={17} />
