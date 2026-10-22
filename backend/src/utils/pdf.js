@@ -229,6 +229,9 @@ export function generatePDF(data) {
     const mensualGroup = groups.find(g => g.type === 'mensual');
     const anualGroup   = groups.find(g => g.type === 'anual');
 
+    let mensualFinal = 0;
+    let anualFinal   = 0;
+
     if (unicoGroup) {
       addRow('Subtotal pago único:', fmtCurrency(subtotal, currency));
       if (parseFloat(discount_percent) > 0) {
@@ -247,6 +250,7 @@ export function generatePDF(data) {
       const mensualBase    = mensualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const mensualTaxable = mensualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const mensualTax     = mensualTaxable * (parseFloat(tax_percent) / 100);
+      mensualFinal = mensualBase + mensualTax;
       ensureSpace(mensualTax > 0 ? 52 : 20);
       if (mensualTax > 0) {
         doc.fillColor(GRAY).font('Helvetica').fontSize(9);
@@ -260,7 +264,7 @@ export function generatePDF(data) {
       }
       doc.fillColor(BILLING_CONFIG.mensual.color).font('Helvetica-Bold').fontSize(10);
       doc.text('Cobro Mensual:', tx, y, { width: tw * 0.5 });
-      doc.text(`${fmtCurrency(mensualBase + mensualTax, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+      doc.text(`${fmtCurrency(mensualFinal, currency)} / mes`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
 
@@ -268,6 +272,7 @@ export function generatePDF(data) {
       const anualBase    = anualGroup.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const anualTaxable = anualGroup.rows.filter(i => i.taxable !== false).reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
       const anualTax     = anualTaxable * (parseFloat(tax_percent) / 100);
+      anualFinal = anualBase + anualTax;
       ensureSpace(anualTax > 0 ? 52 : 20);
       if (anualTax > 0) {
         doc.fillColor(GRAY).font('Helvetica').fontSize(9);
@@ -281,9 +286,32 @@ export function generatePDF(data) {
       }
       doc.fillColor(BILLING_CONFIG.anual.color).font('Helvetica-Bold').fontSize(10);
       doc.text('Cobro Anual:', tx, y, { width: tw * 0.5 });
-      doc.text(`${fmtCurrency(anualBase + anualTax, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
+      doc.text(`${fmtCurrency(anualFinal, currency)} / año`, tx + tw * 0.5, y, { width: tw * 0.5, align: 'right' });
       y += 16;
     }
+
+    // ── Resumen general ───────────────────────────────────────────────────────
+    const summaryRows = [
+      unicoGroup   && { label: 'Pago único:',    value: fmtCurrency(total,        currency), suffix: '',      color: PRIMARY },
+      mensualGroup && { label: 'Cobro mensual:', value: fmtCurrency(mensualFinal, currency), suffix: ' / mes', color: BILLING_CONFIG.mensual.color },
+      anualGroup   && { label: 'Cobro anual:',   value: fmtCurrency(anualFinal,   currency), suffix: ' / año', color: BILLING_CONFIG.anual.color },
+    ].filter(Boolean);
+
+    const boxH = 14 + summaryRows.length * 20 + 8;
+    ensureSpace(boxH + 16);
+    y += 8;
+    doc.rect(M, y, CW, boxH).fill('#f1f5f9');
+    doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7.5)
+       .text('RESUMEN', M + 10, y + 7, { width: CW - 20 });
+    y += 20;
+    for (const row of summaryRows) {
+      doc.fillColor(DARK).font('Helvetica').fontSize(9)
+         .text(row.label, M + 10, y, { width: CW * 0.45 });
+      doc.fillColor(row.color).font('Helvetica-Bold').fontSize(10)
+         .text(`${row.value}${row.suffix}`, M + 10, y, { width: CW - 20, align: 'right' });
+      y += 20;
+    }
+    y += 2;
   } else {
     addRow('Subtotal:', fmtCurrency(subtotal, currency));
     if (parseFloat(discount_percent) > 0) {
