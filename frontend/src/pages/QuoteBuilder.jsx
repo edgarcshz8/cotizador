@@ -505,7 +505,7 @@ export default function QuoteBuilder() {
                     {unicoItems.length > 0 && (
                       <>
                         <div className="flex justify-between text-sm text-gray-500">
-                          <span>Subtotal pago único</span>
+                          <span>Subtotal único</span>
                           <span>{currency} {fmt(subtotalUnico)}</span>
                         </div>
                         {discount > 0 && (
@@ -521,7 +521,7 @@ export default function QuoteBuilder() {
                           </div>
                         )}
                         <div className="flex justify-between text-base font-bold text-blue-700 border-t pt-2 mt-1">
-                          <span>TOTAL PAGO INICIAL</span>
+                          <span>TOTAL PAGO ÚNICO</span>
                           <span>{currency} {fmt(totalInicial)}</span>
                         </div>
                       </>

@@ -4,8 +4,9 @@ function fmtCurrency(amount, currency = 'CLP') {
   return `${currency} ${new Intl.NumberFormat('es-CL').format(Math.round(parseFloat(amount) || 0))}`;
 }
 
+// "Único" = se paga una sola vez | "Mensual/Anual" = cobros recurrentes
 const BILLING_CONFIG = {
-  unico:   { label: 'PAGO INICIAL',  color: '#1e40af', suffix: '' },
+  unico:   { label: 'PAGO ÚNICO',   color: '#1e40af', suffix: '' },
   mensual: { label: 'COBRO MENSUAL', color: '#059669', suffix: ' / mes' },
   anual:   { label: 'COBRO ANUAL',   color: '#d97706', suffix: ' / año' },
 };
@@ -21,13 +22,13 @@ export function generatePDF(data) {
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
 
   const PW = doc.page.width;
-  const M = 50;
+  const M  = 50;
   const CW = PW - 2 * M;
   const PRIMARY = '#1e40af';
-  const WHITE = '#ffffff';
-  const LIGHT = '#f8fafc';
-  const GRAY = '#6b7280';
-  const DARK = '#111827';
+  const WHITE   = '#ffffff';
+  const LIGHT   = '#f8fafc';
+  const GRAY    = '#6b7280';
+  const DARK    = '#111827';
 
   // ── Header ──────────────────────────────────────────────────────────────────
   doc.rect(0, 0, PW, 105).fill(PRIMARY);
@@ -35,8 +36,7 @@ export function generatePDF(data) {
   doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(22)
      .text(company.name || 'Mi Empresa', M, 28);
 
-  const companyMeta = [company.rut, company.email, company.phone]
-    .filter(Boolean).join('   ·   ');
+  const companyMeta = [company.rut, company.email, company.phone].filter(Boolean).join('   ·   ');
   if (companyMeta) {
     doc.font('Helvetica').fontSize(8).fillColor('#bfdbfe')
        .text(companyMeta, M, 56, { width: CW * 0.55 });
@@ -46,7 +46,7 @@ export function generatePDF(data) {
        .text(company.address, M, 68, { width: CW * 0.55 });
   }
 
-  const dateStr = new Date(created_at).toLocaleDateString('es-CL');
+  const dateStr   = new Date(created_at).toLocaleDateString('es-CL');
   const validDate = new Date(
     new Date(created_at).getTime() + (valid_days || 30) * 86400000
   ).toLocaleDateString('es-CL');
@@ -60,97 +60,123 @@ export function generatePDF(data) {
 
   let y = 125;
 
-  // ── Client block ─────────────────────────────────────────────────────────────
-  doc.rect(M, y, CW * 0.60, 72).fill(LIGHT);
+  // ── Client block — full width, sin badge de estado ────────────────────────
+  doc.rect(M, y, CW, 90).fill(LIGHT);
 
   doc.fillColor(PRIMARY).font('Helvetica-Bold').fontSize(7)
      .text('CLIENTE', M + 10, y + 9);
 
+  // Nombre empresa en toda la línea para evitar desborde
   doc.fillColor(DARK).font('Helvetica-Bold').fontSize(11)
-     .text(client_company, M + 10, y + 22, { width: CW * 0.55 });
+     .text(client_company || '-', M + 10, y + 22, { width: CW - 20, lineBreak: false });
 
-  let cy = y + 38;
-  const clientMeta = [client_contact, client_email, client_phone, client_city].filter(Boolean);
-  clientMeta.forEach(line => {
-    doc.fillColor(GRAY).font('Helvetica').fontSize(8.5).text(line, M + 10, cy, { width: CW * 0.55 });
-    cy += 13;
-  });
+  // Fila 1: contacto · email
+  const row1 = [client_contact, client_email].filter(Boolean).join('   ·   ');
+  // Fila 2: teléfono · ciudad
+  const row2 = [client_phone, client_city].filter(Boolean).join('   ·   ');
 
-  // Status badge
-  const statusMap = { pendiente: '#f59e0b', aceptada: '#10b981', rechazada: '#ef4444' };
-  const badgeColor = statusMap[status] || '#6b7280';
-  doc.rect(M + CW * 0.65, y + 20, 110, 26).fill(badgeColor);
-  doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(10)
-     .text((status || 'pendiente').toUpperCase(), M + CW * 0.65, y + 28, { width: 110, align: 'center' });
+  if (row1) {
+    doc.fillColor(GRAY).font('Helvetica').fontSize(8.5)
+       .text(row1, M + 10, y + 42, { width: CW - 20 });
+  }
+  if (row2) {
+    doc.fillColor(GRAY).font('Helvetica').fontSize(8.5)
+       .text(row2, M + 10, y + 57, { width: CW - 20 });
+  }
 
-  y += 92;
+  // Estado de cotización como pequeña etiqueta de texto (sin cuadro)
+  const statusLabel = { pendiente: 'Pendiente', aceptada: 'Aceptada', rechazada: 'Rechazada' };
+  const statusColor = { pendiente: '#d97706', aceptada: '#059669', rechazada: '#dc2626' };
+  doc.fillColor(statusColor[status] || '#6b7280').font('Helvetica-Bold').fontSize(8)
+     .text(`Estado: ${statusLabel[status] || 'Pendiente'}`, M + 10, y + 72, { width: CW - 20 });
+
+  y += 108;
 
   // ── Items table ───────────────────────────────────────────────────────────────
   const descW = CW - 165;
-  const cols = {
+  const cols  = {
     desc:  M,
     qty:   M + descW,
     price: M + descW + 40,
     sub:   M + descW + 105,
   };
 
-  // Table header
   doc.rect(M, y, CW, 22).fill(PRIMARY);
   doc.fillColor(WHITE).font('Helvetica-Bold').fontSize(8.5);
   doc.text('DESCRIPCIÓN',  cols.desc  + 5, y + 7);
-  doc.text('CANT.',         cols.qty,       y + 7, { width: 40,  align: 'center' });
-  doc.text('PRECIO UNIT.',  cols.price,     y + 7, { width: 65,  align: 'right' });
-  doc.text('SUBTOTAL',      cols.sub,       y + 7, { width: 60,  align: 'right' });
+  doc.text('CANT.',         cols.qty,       y + 7, { width: 40, align: 'center' });
+  doc.text('PRECIO UNIT.',  cols.price,     y + 7, { width: 65, align: 'right' });
+  doc.text('SUBTOTAL',      cols.sub,       y + 7, { width: 60, align: 'right' });
   y += 22;
 
-  // Group items: unico → mensual → anual
+  // Agrupar items por tipo de cobro: único → mensual → anual
   const groups = [
     { type: 'unico',   rows: items.filter(i => !i.billing_type || i.billing_type === 'unico') },
     { type: 'mensual', rows: items.filter(i => i.billing_type === 'mensual') },
     { type: 'anual',   rows: items.filter(i => i.billing_type === 'anual') },
   ].filter(g => g.rows.length > 0);
 
-  const hasMixed = groups.length > 1 ||
-    (groups.length === 1 && groups[0].type !== 'unico');
+  const hasMixed = groups.length > 1 || (groups.length === 1 && groups[0].type !== 'unico');
 
   let rowIndex = 0;
 
   groups.forEach((group, gi) => {
     const cfg = BILLING_CONFIG[group.type] || BILLING_CONFIG.unico;
 
+    // Encabezado de sección por tipo de cobro
     if (hasMixed) {
-      // Colored section header
-      doc.rect(M, y, CW, 17).fill(cfg.color + '18');
-      doc.fillColor(cfg.color).font('Helvetica-Bold').fontSize(7.5)
+      doc.rect(M, y, CW, 18).fill(cfg.color + '22');
+      doc.fillColor(cfg.color).font('Helvetica-Bold').fontSize(8)
          .text(cfg.label, M + 8, y + 5, { width: CW - 16 });
-      y += 17;
+      y += 18;
     }
 
-    group.rows.forEach(item => {
-      // subtitle: service_group (parent service name) takes priority over description
-      const subtitle = (item.service_group && item.service_group.trim())
-        ? item.service_group.trim()
-        : (item.description && item.description.trim() ? item.description.trim() : null);
-      const rh = subtitle ? 36 : 22;
-      doc.rect(M, y, CW, rh).fill(rowIndex % 2 === 0 ? WHITE : LIGHT);
-      doc.fillColor(DARK).font('Helvetica-Bold').fontSize(8.5)
-         .text(item.service_name, cols.desc + 5, y + 6, { width: descW - 10 });
-      if (subtitle) {
-        doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
-           .text(subtitle, cols.desc + 5, y + 19, { width: descW - 10 });
+    // Sub-agrupar por servicio padre (service_group)
+    const subGroups = [];
+    const sgMap = new Map();
+    for (const item of group.rows) {
+      const key = item.service_group || null;
+      const mapKey = key ?? `__solo__${item.service_name}`;
+      if (!sgMap.has(mapKey)) {
+        sgMap.set(mapKey, subGroups.length);
+        subGroups.push({ name: key, items: [] });
       }
-      doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
-         .text(String(item.quantity),                       cols.qty,   y + 6, { width: 40, align: 'center' })
-         .text(fmtCurrency(item.unit_price, currency),      cols.price, y + 6, { width: 65, align: 'right' })
-         .text(fmtCurrency(item.subtotal, currency),        cols.sub,   y + 6, { width: 60, align: 'right' });
-      y += rh;
-      rowIndex++;
+      subGroups[sgMap.get(mapKey)].items.push(item);
+    }
+
+    subGroups.forEach(sg => {
+      // Sub-encabezado por nombre de servicio
+      if (sg.name) {
+        doc.rect(M, y, CW, 16).fill('#f1f5f9');
+        doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7)
+           .text(sg.name, M + 12, y + 5, { width: CW - 24 });
+        y += 16;
+      }
+
+      sg.items.forEach(item => {
+        // Descripción como subtítulo solo para ítems legacy sin service_group
+        const subtitle = !sg.name && item.description?.trim() ? item.description.trim() : null;
+        const rh = subtitle ? 36 : 22;
+        doc.rect(M, y, CW, rh).fill(rowIndex % 2 === 0 ? WHITE : LIGHT);
+        doc.fillColor(DARK).font('Helvetica-Bold').fontSize(8.5)
+           .text(item.service_name, cols.desc + 5, y + 6, { width: descW - 10 });
+        if (subtitle) {
+          doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
+             .text(subtitle, cols.desc + 5, y + 19, { width: descW - 10 });
+        }
+        doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
+           .text(String(item.quantity),                   cols.qty,   y + 6, { width: 40, align: 'center' })
+           .text(fmtCurrency(item.unit_price, currency),  cols.price, y + 6, { width: 65, align: 'right' })
+           .text(fmtCurrency(item.subtotal,   currency),  cols.sub,   y + 6, { width: 60, align: 'right' });
+        y += rh;
+        rowIndex++;
+      });
     });
 
-    // Group subtotal row (only when mixed)
+    // Fila de subtotal por tipo (solo cuando hay múltiples tipos)
     if (hasMixed) {
       const groupTotal = group.rows.reduce((s, i) => s + parseFloat(i.subtotal || 0), 0);
-      doc.rect(M, y, CW, 18).fill(cfg.color + '10');
+      doc.rect(M, y, CW, 18).fill(cfg.color + '12');
       doc.fillColor(cfg.color).font('Helvetica-Bold').fontSize(8)
          .text(
            `Subtotal ${cfg.label.toLowerCase()}:   ${fmtCurrency(groupTotal, currency)}${cfg.suffix}`,
@@ -186,7 +212,7 @@ export function generatePDF(data) {
     const anualGroup   = groups.find(g => g.type === 'anual');
 
     if (unicoGroup) {
-      addRow('Subtotal pago inicial:', fmtCurrency(subtotal, currency));
+      addRow('Subtotal pago único:', fmtCurrency(subtotal, currency));
       if (parseFloat(discount_percent) > 0) {
         addRow(`Descuento (${discount_percent}%):`, `- ${fmtCurrency(discount_amount, currency)}`, false, '#10b981');
       }
@@ -195,7 +221,7 @@ export function generatePDF(data) {
       }
       doc.moveTo(tx, y).lineTo(M + CW, y).strokeColor(PRIMARY).lineWidth(1.5).stroke();
       y += 6;
-      addRow('TOTAL PAGO INICIAL:', fmtCurrency(total, currency), true);
+      addRow('TOTAL PAGO ÚNICO:', fmtCurrency(total, currency), true);
       y += 8;
     }
 
