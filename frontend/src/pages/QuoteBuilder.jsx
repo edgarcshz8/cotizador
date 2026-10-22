@@ -535,13 +535,13 @@ export default function QuoteBuilder() {
                             <span>{currency} {fmt(taxAmt)}</span>
                           </div>
                         )}
-                        <div className="flex justify-between text-base font-bold text-blue-700 border-t pt-2 mt-1">
-                          <span>TOTAL PAGO ÚNICO</span>
+                        <div className="flex justify-between text-sm font-semibold text-blue-700">
+                          <span>Total pago único</span>
                           <span>{currency} {fmt(totalInicial)}</span>
                         </div>
                       </>
                     )}
-                    <div className="pt-2 space-y-1.5">
+                    <div className="space-y-1.5">
                       {mensualItems.length > 0 && (
                         <>
                           {mensualTaxAmt > 0 && tax > 0 && (
@@ -582,6 +582,10 @@ export default function QuoteBuilder() {
                           </div>
                         </>
                       )}
+                    </div>
+                    <div className="flex justify-between text-base font-bold text-gray-900 border-t pt-2 mt-1">
+                      <span>Total</span>
+                      <span>{currency} {fmt(totalInicial + (subtotalMensual + mensualTaxAmt) + (subtotalAnual + anualTaxAmt))}</span>
                     </div>
                   </>
                 ) : (
