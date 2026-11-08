@@ -1,8 +1,17 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { timingSafeEqual } from 'crypto';
+import rateLimit from 'express-rate-limit';
 
 const router = Router();
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 10,                   // máximo 10 intentos por ventana
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados intentos de login. Intenta de nuevo en 15 minutos.' },
+});
 
 function safeCompare(a, b) {
   const bufA = Buffer.from(String(a));
@@ -11,7 +20,7 @@ function safeCompare(a, b) {
   return timingSafeEqual(bufA, bufB);
 }
 
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
   const { username, password } = req.body ?? {};
 
   const validUser = process.env.APP_USER;
