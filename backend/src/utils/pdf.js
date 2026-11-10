@@ -169,13 +169,17 @@ export function generatePDF(data) {
       sg.items.forEach(item => {
         // Descripción como subtítulo solo para ítems legacy sin service_group
         const subtitle = !sg.name && item.description?.trim() ? item.description.trim() : null;
-        const rh = subtitle ? 36 : 22;
+        const subtitleW = descW - indent - 5;
+        const subtitleH = subtitle
+          ? doc.font('Helvetica').fontSize(7.5).heightOfString(subtitle, { width: subtitleW })
+          : 0;
+        const rh = subtitle ? 19 + subtitleH + 5 : 22;
         doc.rect(M, y, CW, rh).fill(rowIndex % 2 === 0 ? WHITE : LIGHT);
         doc.fillColor(DARK).font('Helvetica-Bold').fontSize(8.5)
-           .text(item.service_name, cols.desc + indent, y + 6, { width: descW - indent - 5 });
+           .text(item.service_name, cols.desc + indent, y + 6, { width: subtitleW });
         if (subtitle) {
           doc.fillColor(GRAY).font('Helvetica').fontSize(7.5)
-             .text(subtitle, cols.desc + indent, y + 19, { width: descW - indent - 5 });
+             .text(subtitle, cols.desc + indent, y + 19, { width: subtitleW });
         }
         doc.fillColor(DARK).font('Helvetica').fontSize(8.5)
            .text(String(item.quantity),                   cols.qty,   y + 6, { width: 40, align: 'center' })
