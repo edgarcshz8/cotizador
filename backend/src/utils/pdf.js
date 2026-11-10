@@ -150,10 +150,19 @@ export function generatePDF(data) {
     subGroups.forEach(sg => {
       // Sub-encabezado por nombre de servicio (sin sangrado — va pegado a la izquierda)
       if (sg.name) {
-        doc.rect(M, y, CW, 16).fill('#f1f5f9');
+        const groupDesc = sg.items[0]?.description?.trim() || null;
+        const descH = groupDesc
+          ? doc.font('Helvetica').fontSize(7).heightOfString(groupDesc, { width: CW - 14 }) + 2
+          : 0;
+        const headerH = 16 + (groupDesc ? descH + 3 : 0);
+        doc.rect(M, y, CW, headerH).fill('#f1f5f9');
         doc.fillColor('#475569').font('Helvetica-Bold').fontSize(7.5)
            .text(sg.name, M + 5, y + 5, { width: CW - 10 });
-        y += 16;
+        if (groupDesc) {
+          doc.fillColor('#94a3b8').font('Helvetica').fontSize(7)
+             .text(groupDesc, M + 7, y + 15, { width: CW - 14 });
+        }
+        y += headerH;
       }
 
       const indent = sg.name ? 18 : 5; // sub-ítems sangrados si hay grupo padre

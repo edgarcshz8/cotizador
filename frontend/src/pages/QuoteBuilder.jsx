@@ -65,14 +65,15 @@ export default function QuoteBuilder() {
       setCart(prev => {
         const without = prev.filter(i => i.service_id !== service.id);
         const newItems = comps.map(comp => ({
-          cart_key:     `${service.id}_${comp.id}`,
-          service_id:   service.id,
-          service_name: service.name,   // parent (for grouping + PDF)
-          service_name_display: comp.name,  // what shows on the line
-          billing_type: comp.billing_type || 'unico',
-          taxable:      comp.taxable !== false,
-          unit_price:   parseFloat(comp.unit_price) || 0,
-          quantity:     1,
+          cart_key:            `${service.id}_${comp.id}`,
+          service_id:          service.id,
+          service_name:        service.name,   // parent (for grouping + PDF)
+          service_name_display: comp.name,     // what shows on the line
+          service_description: service.description || '',
+          billing_type:        comp.billing_type || 'unico',
+          taxable:             comp.taxable !== false,
+          unit_price:          parseFloat(comp.unit_price) || 0,
+          quantity:            1,
         }));
         return [...without, ...newItems];
       });
@@ -86,14 +87,15 @@ export default function QuoteBuilder() {
           );
         }
         return [...prev, {
-          cart_key:     service.id,
-          service_id:   service.id,
-          service_name: service.name,
+          cart_key:            service.id,
+          service_id:          service.id,
+          service_name:        service.name,
           service_name_display: service.name,
-          billing_type: service.billing_type || 'unico',
-          taxable:      true,
-          unit_price:   parseFloat(service.unit_price) || 0,
-          quantity:     1,
+          service_description: service.description || '',
+          billing_type:        service.billing_type || 'unico',
+          taxable:             true,
+          unit_price:          parseFloat(service.unit_price) || 0,
+          quantity:            1,
         }];
       });
     }
@@ -189,6 +191,7 @@ export default function QuoteBuilder() {
           service_id:   i.service_id,
           service_name: i.service_name_display,  // component name on the line
           service_group: i.service_name !== i.service_name_display ? i.service_name : null,
+          description:  i.service_description || '',
           unit_price:   i.unit_price,
           billing_type: i.billing_type,
           taxable:      i.taxable !== false,
